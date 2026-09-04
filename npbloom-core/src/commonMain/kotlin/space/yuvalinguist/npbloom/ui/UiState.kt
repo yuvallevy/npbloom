@@ -50,7 +50,6 @@ enum class ChildNodeSide { Left, Right, Center }
 @JsExport class MoveSelectedTrees(val dx: Double, val dy: Double) : UiAction
 @JsExport class ResetSelectedNodePositions : UiAction
 @JsExport class ToggleTriangle : UiAction
-@JsExport class SetNodeEnclosureCornerRadius(val nodeIndicator: NodeIndicatorInPlot, val newEnclosureCornerRadius: Double?) : UiAction
 @JsExport class SetSentence(val newSentence: Sentence, val oldSelectedSlice: StringSlice, val treeId: Id? = null) : UiAction
 @JsExport class ToggleSliceStrikethrough : UiAction
 @JsExport class AddTree(val newTreeId: Id, val coordsInPlot: CoordsInPlot) : UiAction
@@ -473,20 +472,6 @@ fun uiReducer(state: UiState, action: UiAction, strWidthFunc: StrWidthFunc): UiS
                         !currentlyTriangle,
                     )
                 ),
-            )
-        }
-
-        is SetNodeEnclosureCornerRadius -> {
-            return state.copy(
-                contentState = contentReducer(
-                    state.contentState,
-                    SetNodeEnclosureCornerRadius(
-                        state.activePlotIndex,
-                        action.nodeIndicator,
-                        action.newEnclosureCornerRadius,
-                    )
-                ),
-                activeShapeTool = ShapeTool.None,
             )
         }
 

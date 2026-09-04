@@ -17,7 +17,6 @@ sealed interface UnpositionedNode : NodeBase {
     fun withLabel(newLabel: NodeLabel): UnpositionedNode
     fun withOffset(newOffset: TreeCoordsOffset): UnpositionedNode
     fun changeOffset(offsetD: TreeCoordsOffset) = withOffset(offset + offsetD)
-    fun withEnclosureCornerRadius(newEnclosureCornerRadius: Double?): UnpositionedNode
 }
 
 @JsExport
@@ -30,7 +29,6 @@ data class UnpositionedBranchingNode internal constructor(
     @SerialName("Y") internal val children: Set<Id>,
     @SerialName("+") val folded: Boolean = false,
     @SerialName("-") override val yAlignMode: YAlignMode = YAlignMode.Bottom,
-    @SerialName("O") override val enclosureCornerRadius: Double? = null,
 ) : UnpositionedNode {
     @Transient val childrenAsArray = children.toTypedArray()
 
@@ -39,9 +37,6 @@ data class UnpositionedBranchingNode internal constructor(
     override fun withLabel(newLabel: NodeLabel) = copy(label = newLabel)
 
     override fun withOffset(newOffset: TreeCoordsOffset) = copy(offset = newOffset)
-
-    override fun withEnclosureCornerRadius(newEnclosureCornerRadius: Double?) =
-        copy(enclosureCornerRadius = newEnclosureCornerRadius)
 }
 
 @JsExport
@@ -55,16 +50,12 @@ data class UnpositionedTerminalNode internal constructor(
     @SerialName("^") val triangle: Boolean = false,
     @SerialName("+") val folded: Boolean = false,
     @SerialName("-") override val yAlignMode: YAlignMode = YAlignMode.Bottom,
-    @SerialName("O") override val enclosureCornerRadius: Double? = null,
 ) : UnpositionedNode {
     override fun withId(newId: Id) = copy(id = newId)
 
     override fun withLabel(newLabel: NodeLabel) = copy(label = newLabel)
 
     override fun withOffset(newOffset: TreeCoordsOffset) = copy(offset = newOffset)
-
-    override fun withEnclosureCornerRadius(newEnclosureCornerRadius: Double?) =
-        copy(enclosureCornerRadius = newEnclosureCornerRadius)
 }
 
 @JsExport
@@ -79,16 +70,12 @@ data class UnpositionedPlainStrandedNode internal constructor(
     @SerialName("l") override val label: NodeLabel,
     @SerialName("o") override val offset: TreeCoordsOffset = TreeCoordsOffset.ZERO,
     @SerialName("-") override val yAlignMode: YAlignMode = YAlignMode.Bottom,
-    @SerialName("O") override val enclosureCornerRadius: Double? = null,
 ) : UnpositionedStrandedNode {
     override fun withId(newId: Id) = copy(id = newId)
 
     override fun withLabel(newLabel: NodeLabel) = copy(label = newLabel)
 
     override fun withOffset(newOffset: TreeCoordsOffset) = copy(offset = newOffset)
-
-    override fun withEnclosureCornerRadius(newEnclosureCornerRadius: Double?) =
-        copy(enclosureCornerRadius = newEnclosureCornerRadius)
 }
 
 @JsExport
@@ -101,16 +88,12 @@ data class UnpositionedFormerlyTerminalNode internal constructor(
     @SerialName("s") val formerSlice: StringSlice,
     @SerialName("^") val formerlyTriangle: Boolean,
     @SerialName("-") override val yAlignMode: YAlignMode = YAlignMode.Bottom,
-    @SerialName("O") override val enclosureCornerRadius: Double? = null,
 ) : UnpositionedStrandedNode {
     override fun withId(newId: Id) = copy(id = newId)
 
     override fun withLabel(newLabel: NodeLabel) = copy(label = newLabel)
 
     override fun withOffset(newOffset: TreeCoordsOffset) = copy(offset = newOffset)
-
-    override fun withEnclosureCornerRadius(newEnclosureCornerRadius: Double?) =
-        copy(enclosureCornerRadius = newEnclosureCornerRadius)
 }
 
 @JsExport
@@ -122,14 +105,10 @@ data class UnpositionedFormerlyBranchingNode internal constructor(
     @SerialName("o") override val offset: TreeCoordsOffset = TreeCoordsOffset.ZERO,
     @SerialName("Y") internal val formerDescendants: EntitySet<UnpositionedNode>,
     @SerialName("-") override val yAlignMode: YAlignMode = YAlignMode.Bottom,
-    @SerialName("O") override val enclosureCornerRadius: Double? = null,
 ) : UnpositionedStrandedNode {
     override fun withId(newId: Id) = copy(id = newId)
 
     override fun withLabel(newLabel: NodeLabel) = copy(label = newLabel)
 
     override fun withOffset(newOffset: TreeCoordsOffset) = copy(offset = newOffset)
-
-    override fun withEnclosureCornerRadius(newEnclosureCornerRadius: Double?) =
-        copy(enclosureCornerRadius = newEnclosureCornerRadius)
 }

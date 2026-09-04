@@ -108,7 +108,6 @@ data class UnpositionedTree(
                     label = it.label,
                     offset = TreeCoordsOffset.ZERO,
                     children = (if (it is UnpositionedBranchingNode) it.children else emptySet()) + adoptedNodeIds,
-                    enclosureCornerRadius = it.enclosureCornerRadius,
                 )
             }
         }

@@ -217,12 +217,12 @@ fun createShapeFromDrag(
 
     else -> EnclosureShape(
         id = generateShapeId(),
-        x = min(start.plotX, end.plotX),
-        y = min(start.plotY, end.plotY),
-        width = abs(end.plotX - start.plotX),
-        height = abs(end.plotY - start.plotY),
+            x = min(start.plotX, end.plotX),
+            y = min(start.plotY, end.plotY),
+            width = abs(end.plotX - start.plotX),
+            height = abs(end.plotY - start.plotY),
         cornerRadius = cornerRadiusByShapeTool(tool),
-    )
+        )
 }
 
 /**
@@ -265,21 +265,6 @@ fun determineActionOnDragCompletion(
     if (mouseInteractionMode == MouseInteractionMode.CreatingShape) {
         val startCoordsInPlot = dragStartCoords.toCoordsInPlot(panZoomState)
         val endCoordsInPlot = dragEndCoords.toCoordsInPlot(panZoomState)
-
-        // Two paths from here:
-        // The enclosure may have been drawn around a single node,
-        // in which case the shape needs to be attached to the node.
-        val nodeMatchingCoordinates = findSingleNodeEnclosedByRect(plot, RectInPlot(startCoordsInPlot, endCoordsInPlot))
-        if (nodeMatchingCoordinates != null) {
-            println("Drawing enclosure of type $activeShapeTool around node $nodeMatchingCoordinates")
-            return SetNodeEnclosureCornerRadius(
-                nodeMatchingCoordinates,
-                cornerRadiusByShapeTool(activeShapeTool),
-            )
-        }
-
-        // The enclosure may have been drawn around no nodes or two or more nodes,
-        // in which case the shape needs to stand on its own exactly where drawn.
         val freeStandingShape = createShapeFromDrag(activeShapeTool, startCoordsInPlot, endCoordsInPlot)
         return AddShapeToPlot(freeStandingShape)
     }

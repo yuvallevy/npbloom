@@ -76,12 +76,6 @@ internal data class SetNodeLabel(
     val newLabel: String
 ) : ContentAction
 
-internal data class SetNodeEnclosureCornerRadius(
-    val plotIndex: PlotIndex,
-    val nodeIndicator: NodeIndicatorInPlot,
-    val newEnclosureCornerRadius: Double?,
-) : ContentAction
-
 internal data class SetNodeSlice(
     val plotIndex: PlotIndex,
     val nodeIndicator: NodeIndicatorInPlot,
@@ -207,15 +201,6 @@ private fun makeUndoable(state: ContentState, action: ContentAction): ContentCha
         state.plots[action.plotIndex].tree(action.nodeIndicator.treeId),
         state.plots[action.plotIndex].tree(action.nodeIndicator.treeId)
             .transformNode(action.nodeIndicator.nodeId) { it.withLabel(action.newLabel) }
-    )
-
-    is SetNodeEnclosureCornerRadius -> TreeChanged(
-        action.plotIndex,
-        state.plots[action.plotIndex].tree(action.nodeIndicator.treeId),
-        state.plots[action.plotIndex].tree(action.nodeIndicator.treeId)
-            .transformNode(action.nodeIndicator.nodeId) {
-                it.withEnclosureCornerRadius(action.newEnclosureCornerRadius)
-            }
     )
 
     is SetNodeSlice -> TreeChanged(

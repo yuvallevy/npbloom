@@ -7,7 +7,6 @@ import {
   applyTreeSelection,
   BranchingNodeCreationTrigger,
   ClientCoordsOffset,
-  CoordsInClient,
   coordsInPlotToCoordsInClient,
   DisownNodesBySelection,
   EntitySelectionAction,
@@ -35,7 +34,6 @@ import './TreeView.scss';
 import useUiState from '../useUiState';
 import SettingsStateContext from '../SettingsStateContext';
 import { NODE_AREA_HEIGHT, SENTENCE_FONT_SIZE_PX } from '../uiDimensions.ts';
-import { renderBaseEnclosure } from './shapes/enclosures.tsx';
 
 const NODE_LEVEL_SPACING = 20;
 const TRIANGLE_BASE_Y = -2;
@@ -43,9 +41,6 @@ const TRIANGLE_BASE_Y = -2;
 const NODE_AREA_WIDTH = 35;
 const NODE_AREA_RELATIVE_X = -(NODE_AREA_WIDTH / 2);
 const NODE_AREA_RELATIVE_Y = -18.5;
-
-const NODE_ENCLOSURE_MARGIN_X = 4;
-const NODE_ENCLOSURE_MARGIN_Y = 8;
 
 const TREE_AREA_PADDING = 12;
 
@@ -144,20 +139,6 @@ const renderTriangleConnection = (nodeId: Id, node: PositionedTerminalNode): Rea
     d={`M${node.position.treeX} ${node.position.treeY} L${node.triangle.treeX1} ${TRIANGLE_BASE_Y}  L${node.triangle.treeX2} ${TRIANGLE_BASE_Y} Z`}
   />;
 
-const renderNodeEnclosure = (node: PositionedNode): React.ReactNode | null => {
-  if (!node.enclosureCornerRadius && node.enclosureCornerRadius !== 0) return null;
-  // The enclosure will be attached to the node, which already has the coordinate system conversions applied.
-  // Hence, we can pass the node's tree coordinates directly to the enclosure rendering function.
-  const topLeft = new CoordsInClient(
-    node.position.treeX - NODE_ENCLOSURE_MARGIN_X + NODE_AREA_RELATIVE_X,
-    node.position.treeY - NODE_ENCLOSURE_MARGIN_Y + NODE_AREA_RELATIVE_Y
-  );
-  const width = NODE_AREA_WIDTH + NODE_ENCLOSURE_MARGIN_X * 2;
-  const height = NODE_AREA_HEIGHT + NODE_ENCLOSURE_MARGIN_Y * 2;
-  const cornerRadius = node.enclosureCornerRadius;
-  return renderBaseEnclosure(topLeft, width, height, cornerRadius, 'TreeView--node-enclosure');
-};
-
 const renderNode = (
   nodeId: Id,
   node: PositionedNode,
@@ -185,7 +166,6 @@ const renderNode = (
     }}
     onDoubleClick={onEditStart}
   >
-    {renderNodeEnclosure(node)}
     <rect
       x={node.position.treeX + NODE_AREA_RELATIVE_X}
       y={node.position.treeY + NODE_AREA_RELATIVE_Y}

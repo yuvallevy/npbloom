@@ -11,5 +11,4 @@ typealias NodeLabel = String
 interface NodeBase : WithId {
     val label: NodeLabel
     val yAlignMode: YAlignMode
-    val enclosureCornerRadius: Double?
 }

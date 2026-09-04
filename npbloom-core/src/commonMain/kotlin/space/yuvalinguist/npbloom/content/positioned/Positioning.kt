@@ -117,26 +117,23 @@ internal fun applyNodePosition(
             )
             val terminalNode = UnpositionedTerminalNode(
                 id = node.id, label = node.label, slice = slice, triangle = true, offset = node.offset,
-                folded = true, yAlignMode = node.yAlignMode, enclosureCornerRadius = node.enclosureCornerRadius,
+                folded = true, yAlignMode = node.yAlignMode,
             )
             applyNodePosition(alreadyPositionedNodes, strWidthFunc, unpositionedTree, terminalNode)
         } else PositionedBranchingNode(
             id = node.id, label = node.label, children = node.children, yAlignMode = node.yAlignMode,
             position = determineBranchingNodePosition(alreadyPositionedNodes, node),
-            enclosureCornerRadius = node.enclosureCornerRadius,
         )
 
     is UnpositionedTerminalNode -> PositionedTerminalNode(
         id = node.id, label = node.label, slice = node.slice, folded = node.folded, yAlignMode = node.yAlignMode,
         triangle = determineTerminalNodeTriangleRange(strWidthFunc, unpositionedTree.sentence, node),
         position = determineTerminalNodePosition(strWidthFunc, unpositionedTree.sentence, node),
-        enclosureCornerRadius = node.enclosureCornerRadius,
     )
 
     is UnpositionedStrandedNode -> PositionedStrandedNode(
         id = node.id, label = node.label, yAlignMode = node.yAlignMode,
         position = determineStrandedNodePosition(strWidthFunc, unpositionedTree, node),
-        enclosureCornerRadius = node.enclosureCornerRadius,
     )
 }
 
