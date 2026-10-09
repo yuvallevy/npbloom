@@ -119,10 +119,10 @@ internal data class SetTreeContent(
 ) : ContentAction
 
 internal data class DeleteTree(val plotIndex: PlotIndex, val treeId: Id) : ContentAction
-internal data class AddShape(val plotIndex: PlotIndex, val newShape: PlotShape) : ContentAction
+internal data class AddShape(val plotIndex: PlotIndex, val newShape: PersistentPlotShape) : ContentAction
 internal data class DeleteShapes(val plotIndex: PlotIndex, val shapeIds: Set<Id>) : ContentAction
 internal data class MoveShapes(val plotIndex: PlotIndex, val shapeIds: Set<Id>, val offset: PlotCoordsOffset) : ContentAction
-internal data class TransformShape(val plotIndex: PlotIndex, val shapeId: Id, val newShape: PlotShape) : ContentAction
+internal data class TransformShape(val plotIndex: PlotIndex, val shapeId: Id, val newShape: PersistentPlotShape) : ContentAction
 internal data class FoldNodes(val plotIndex: PlotIndex, val nodeIndicators: Set<NodeIndicatorInPlot>) : ContentAction
 internal data class UnfoldNodes(val plotIndex: PlotIndex, val nodeIndicators: Set<NodeIndicatorInPlot>) : ContentAction
 internal data class UnfoldNodesOneLevel(val plotIndex: PlotIndex, val nodeIndicators: Set<NodeIndicatorInPlot>) : ContentAction
@@ -140,9 +140,9 @@ internal data class TreeChanged(val plotIndex: PlotIndex, val old: UnpositionedT
     ContentChange
 
 internal data class TreeDeleted(val plotIndex: PlotIndex, val removedTree: UnpositionedTree) : ContentChange
-internal data class ShapeAdded(val plotIndex: PlotIndex, val newShape: PlotShape) : ContentChange
-internal data class ShapeChanged(val plotIndex: PlotIndex, val old: PlotShape, val new: PlotShape) : ContentChange
-internal data class ShapeDeleted(val plotIndex: PlotIndex, val removedShape: PlotShape) : ContentChange
+internal data class ShapeAdded(val plotIndex: PlotIndex, val newShape: PersistentPlotShape) : ContentChange
+internal data class ShapeChanged(val plotIndex: PlotIndex, val old: PersistentPlotShape, val new: PersistentPlotShape) : ContentChange
+internal data class ShapeDeleted(val plotIndex: PlotIndex, val removedShape: PersistentPlotShape) : ContentChange
 
 private fun makeUndoable(state: ContentState, action: ContentAction): ContentChange = when (action) {
     AddPlot -> PlotAdded(state.plots.size, UnpositionedPlot())

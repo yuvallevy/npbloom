@@ -4,6 +4,12 @@ package space.yuvalinguist.npbloom.content.positioned
 
 import space.yuvalinguist.npbloom.content.*
 import space.yuvalinguist.npbloom.content.unpositioned.*
+import space.yuvalinguist.npbloom.ui.NODE_AREA_HEIGHT
+import space.yuvalinguist.npbloom.ui.NODE_AREA_RELATIVE_X
+import space.yuvalinguist.npbloom.ui.NODE_AREA_RELATIVE_Y
+import space.yuvalinguist.npbloom.ui.NODE_AREA_WIDTH
+import space.yuvalinguist.npbloom.ui.NODE_ENCLOSURE_MARGIN_X
+import space.yuvalinguist.npbloom.ui.NODE_ENCLOSURE_MARGIN_Y
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
 
@@ -206,14 +212,49 @@ internal fun applyNodePositionsToTree(strWidthFunc: StrWidthFunc, tree: Unpositi
     )
 
 /**
- * Returns a copy of the given plot with positions for all trees and nodes.
+ * Returns the drawable form of the given shape, based on the already positioned trees in its plot.
+ * Free-standing shapes are already defined in plot coordinates and are drawable as they are.
+ * Node-bound shapes get their bounds from their anchor node; if the anchor no longer exists, returns null.
+ */
+internal fun applyPositionToShape(
+    positionedTrees: EntitySet<PositionedTree>,
+    shape: PersistentPlotShape,
+): DrawablePlotShape? = when (shape) {
+    // Free-standing shapes are already drawable as-is
+    is FreeStandingPlotShape -> shape
+
+    // Node-bound enclosures need some massaging -
+    // to make them drawable we must first figure out what their positions are
+    is NodeBoundEnclosureShape -> {
+        val tree = positionedTrees[shape.nodeIndicatorInPlot.treeId]
+        val node = tree?.nodes?.get(shape.nodeIndicatorInPlot.nodeId)
+        if (tree == null || node == null) null
+        else ResolvedNodeBoundEnclosureShape(
+            id = shape.id,
+            nodeIndicatorInPlot = shape.nodeIndicatorInPlot,
+            cornerRadius = shape.cornerRadius,
+            strokeColor = shape.strokeColor,
+            strokeWidth = shape.strokeWidth,
+            fillColor = shape.fillColor,
+            plotX = tree.position.plotX + node.position.treeX + NODE_AREA_RELATIVE_X - NODE_ENCLOSURE_MARGIN_X,
+            plotY = tree.position.plotY + node.position.treeY + NODE_AREA_RELATIVE_Y - NODE_ENCLOSURE_MARGIN_Y,
+            width = NODE_AREA_WIDTH + NODE_ENCLOSURE_MARGIN_X * 2,
+            height = NODE_AREA_HEIGHT + NODE_ENCLOSURE_MARGIN_Y * 2,
+        )
+    }
+}
+
+/**
+ * Returns a copy of the given plot with positions for all trees and nodes, and drawable forms of all shapes.
  */
 @JsExport
-fun applyNodePositionsToPlot(strWidthFunc: StrWidthFunc, plot: UnpositionedPlot): PositionedPlot =
-    PositionedPlot(
-        trees = plot.trees.mapToNewEntitySet { tree -> applyNodePositionsToTree(strWidthFunc, tree) },
-        shapes = plot.shapes,
+fun applyNodePositionsToPlot(strWidthFunc: StrWidthFunc, plot: UnpositionedPlot): PositionedPlot {
+    val positionedTrees = plot.trees.mapToNewEntitySet { tree -> applyNodePositionsToTree(strWidthFunc, tree) }
+    return PositionedPlot(
+        trees = positionedTrees,
+        shapes = EntitySet(plot.shapes.map { applyPositionToShape(positionedTrees, it) }.filterNotNull()),
     )
+}
 
 /**
  * Receives an array of node IDs in the given tree and returns them sorted by X-coordinate.

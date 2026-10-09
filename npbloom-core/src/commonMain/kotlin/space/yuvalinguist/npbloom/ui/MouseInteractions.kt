@@ -10,8 +10,10 @@ import space.yuvalinguist.npbloom.content.positioned.PositionedPlot
 import space.yuvalinguist.npbloom.content.positioned.PositionedTree
 import space.yuvalinguist.npbloom.content.unpositioned.Arrowhead
 import space.yuvalinguist.npbloom.content.unpositioned.EnclosureShape
+import space.yuvalinguist.npbloom.content.unpositioned.FreeStandingPlotShape
 import space.yuvalinguist.npbloom.content.unpositioned.LineShape
-import space.yuvalinguist.npbloom.content.unpositioned.PlotShape
+import space.yuvalinguist.npbloom.content.unpositioned.NodeBoundEnclosureShape
+import space.yuvalinguist.npbloom.content.unpositioned.PersistentPlotShape
 import kotlin.math.*
 import kotlin.js.ExperimentalJsExport
 import kotlin.js.JsExport
@@ -130,12 +132,12 @@ fun snapAngleTo45Deg(dx: Double, dy: Double): ClientCoordsOffset {
  */
 @JsExport
 fun computeResizedShape(
-    originalShape: PlotShape,
+    originalShape: FreeStandingPlotShape,
     handleId: String,
     dPlotX: Double,
     dPlotY: Double,
     snapTo45Deg: Boolean = false,
-): PlotShape = when (originalShape) {
+): FreeStandingPlotShape = when (originalShape) {
     is EnclosureShape -> {
         var newX = originalShape.x
         var newY = originalShape.y
@@ -199,15 +201,16 @@ fun cornerRadiusByShapeTool(shapeTool: ShapeTool) = when (shapeTool) {
 /**
  * Given the shape tool being used and the start and end coordinates of a drag in plot coordinates,
  * returns the corresponding shape to be added to the plot.
- * Used both to show shape previews while dragging to create a new shape
+ * Used both to show shape previews while dragging to create a new shape (via `PositionedPlot.positionShape`)
  * and to determine the final shape when completing a creation drag.
  */
 @JsExport
 fun createShapeFromDrag(
+    plot: PositionedPlot,
     tool: ShapeTool,
     start: CoordsInPlot,
     end: CoordsInPlot,
-): PlotShape = when (tool) {
+): PersistentPlotShape = when (tool) {
     ShapeTool.Line, ShapeTool.Arrow -> LineShape(
         id = generateShapeId(),
         start = start,
@@ -215,14 +218,30 @@ fun createShapeFromDrag(
         arrowhead = if (tool == ShapeTool.Arrow) Arrowhead.End else Arrowhead.None,
     )
 
-    else -> EnclosureShape(
-        id = generateShapeId(),
+    else -> {
+        val id = generateShapeId()
+        val cornerRadius = cornerRadiusByShapeTool(tool)
+
+        // RectInPlot expects topLeft/bottomRight in order, but a drag can go in any of the four directions -
+        // normalize so node detection works regardless of which corner the user dragged from.
+        val normalizedRect = RectInPlot(
+            topLeft = CoordsInPlot(min(start.plotX, end.plotX), min(start.plotY, end.plotY)),
+            bottomRight = CoordsInPlot(max(start.plotX, end.plotX), max(start.plotY, end.plotY)),
+        )
+        val nodeMatchingCoordinates = findSingleNodeEnclosedByRect(plot, normalizedRect)
+        if (nodeMatchingCoordinates != null) NodeBoundEnclosureShape(
+            id = id,
+            nodeIndicatorInPlot = nodeMatchingCoordinates,
+            cornerRadius = cornerRadius,
+        ) else EnclosureShape(
+            id = id,
             x = min(start.plotX, end.plotX),
             y = min(start.plotY, end.plotY),
             width = abs(end.plotX - start.plotX),
             height = abs(end.plotY - start.plotY),
-        cornerRadius = cornerRadiusByShapeTool(tool),
+            cornerRadius = cornerRadius,
         )
+    }
 }
 
 /**
@@ -239,7 +258,6 @@ fun determineActionOnDragCompletion(
     dragEndCoords: CoordsInClient,
     panZoomState: PanZoomState,
     activeShapeTool: ShapeTool,
-    resizingShape: PlotShape?,
     resizeHandleId: String?,
     isShiftDragging: Boolean,
 ): UiAction? {
@@ -255,18 +273,17 @@ fun determineActionOnDragCompletion(
         else -> {}
     }
 
-    // If we're resizing a shape, return a TransformSelectedShape action with the new shape resulting from that resize
-    if (mouseInteractionMode == MouseInteractionMode.ResizingShape && resizingShape != null && resizeHandleId != null) {
-        val newShape = computeResizedShape(resizingShape, resizeHandleId, dPlotX, dPlotY, isShiftDragging)
-        return TransformSelectedShape(newShape)
+    // If we're resizing a shape, return a ResizeSelectedShape action describing the resize
+    if (mouseInteractionMode == MouseInteractionMode.ResizingShape && resizeHandleId != null) {
+        return ResizeSelectedShape(resizeHandleId, dPlotX, dPlotY, isShiftDragging)
     }
 
     // If we're creating a shape, return an AddShapeToPlot action with the shape corresponding to the drag we just made
     if (mouseInteractionMode == MouseInteractionMode.CreatingShape) {
         val startCoordsInPlot = dragStartCoords.toCoordsInPlot(panZoomState)
         val endCoordsInPlot = dragEndCoords.toCoordsInPlot(panZoomState)
-        val freeStandingShape = createShapeFromDrag(activeShapeTool, startCoordsInPlot, endCoordsInPlot)
-        return AddShapeToPlot(freeStandingShape)
+        val shape = createShapeFromDrag(plot, activeShapeTool, startCoordsInPlot, endCoordsInPlot)
+        return AddShapeToPlot(shape)
     }
 
     return null

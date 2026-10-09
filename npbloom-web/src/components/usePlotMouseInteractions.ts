@@ -18,9 +18,9 @@
 import { useState } from 'react';
 import {
   AddTree, AddTreeFromLbn, ClientCoordsOffset, computeResizedShape, CoordsInClient, CoordsInPlot, createShapeFromDrag,
-  determineActionOnDragCompletion,
-  determineActionOnSelectBoxCompletion, EntitySelectionMode, generateTreeId, MouseInteractionMode, NoSelectionInPlot,
-  Pan, PlotShape, PositionedPlot, RectInClient, SetSelection, ShapeSelectionInPlot, ShapeTool, snapAngleTo45Deg
+  determineActionOnDragCompletion, determineActionOnSelectBoxCompletion, EnclosureShape, EntitySelectionMode,
+  FreeStandingPlotShape, generateTreeId, LineShape, MouseInteractionMode, NoSelectionInPlot, Pan, PositionedPlot,
+  RectInClient, SetSelection, ShapeSelectionInPlot, ShapeTool, snapAngleTo45Deg
 } from 'npbloom-core';
 import useUiState from '../useUiState';
 import usePlotMouseWheelInteractions from './usePlotMouseWheelInteractions';
@@ -40,7 +40,8 @@ const usePlotMouseInteractions = (
   const [mouseInteractionMode, setMouseInteractionMode] =
     useState<MouseInteractionMode>(MouseInteractionMode.Idle);
   const [resizeHandleId, setResizeHandleId] = useState<string | undefined>();
-  const [resizingShape, setResizingShape] = useState<PlotShape | undefined>();
+  // Kept only to render the resize preview; the resize itself is dispatched as an intent (ResizeSelectedShape)
+  const [resizingShape, setResizingShape] = useState<FreeStandingPlotShape | undefined>();
   const [isShiftDragging, setIsShiftDragging] = useState(false);
 
   // `dragEndCoords` is split into "raw" and "effective" versions.
@@ -110,11 +111,12 @@ const usePlotMouseInteractions = (
     : undefined;
 
   const creationPreviewShape = mouseInteractionMode === MouseInteractionMode.CreatingShape && dragStartCoords && dragEndCoords
-    ? createShapeFromDrag(
+    ? plot.positionShape(createShapeFromDrag(
+      plot,
       state.activeShapeTool,
       dragStartCoords.toCoordsInPlot(state.panZoomState),
       dragEndCoords.toCoordsInPlot(state.panZoomState),
-    ) : undefined;
+    )) ?? undefined : undefined;
 
   const addTreeAndFocus = (position: CoordsInPlot) => {
     const newTreeId = generateTreeId();
@@ -201,7 +203,6 @@ const usePlotMouseInteractions = (
         dragEndCoords,
         state.panZoomState,
         state.activeShapeTool,
-        resizingShape,
         resizeHandleId,
         isShiftDragging,
       );
@@ -244,7 +245,9 @@ const usePlotMouseInteractions = (
   const handleResizeHandleMouseDown = (handleId: string, event: React.MouseEvent<SVGElement>) => {
     if (event.buttons === PRIMARY_MOUSE_BUTTON && selectedShapeIds.length === 1) {
       const shape = plot.shapes.get(selectedShapeIds[0]);
-      if (shape) {
+      // Only free-standing shapes are resizable (and only they render usable resize handles).
+      // Kotlin interfaces can't be checked with instanceof from JS, so we check the concrete classes.
+      if (shape instanceof EnclosureShape || shape instanceof LineShape) {
         setMouseInteractionMode(MouseInteractionMode.ResizingShape);
         setResizeHandleId(handleId);
         setResizingShape(shape);

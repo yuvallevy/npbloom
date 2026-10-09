@@ -16,7 +16,7 @@ import kotlin.js.JsName
 @Serializable
 data class UnpositionedPlot internal constructor(
     @SerialName("t") val trees: EntitySet<UnpositionedTree> = EntitySet(),
-    @SerialName("s") val shapes: EntitySet<PlotShape> = EntitySet(),
+    @SerialName("s") val shapes: EntitySet<PersistentPlotShape> = EntitySet(),
 ) {
     val isEmpty get() = trees.isEmpty() && shapes.isEmpty()
 
@@ -116,13 +116,13 @@ data class UnpositionedPlot internal constructor(
 
     internal fun containsShape(shapeId: Id) = shapeId in shapes
 
-    internal fun setShape(shape: PlotShape) = copy(shapes = shapes + shape)
+    internal fun setShape(shape: PersistentPlotShape) = copy(shapes = shapes + shape)
 
     internal fun removeShape(shapeId: Id) = copy(shapes = shapes - shapeId)
 
     internal fun transformShapes(
         shapeIds: Set<Id>,
-        transformFunc: (PlotShape) -> PlotShape,
+        transformFunc: (PersistentPlotShape) -> PersistentPlotShape,
     ): UnpositionedPlot = copy(
         shapes = shapes + shapes.filter { it.id in shapeIds }.map(transformFunc)
     )

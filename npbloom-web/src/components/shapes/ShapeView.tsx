@@ -2,26 +2,28 @@ import React from 'react';
 import {
   applyShapeSelection,
   ClientCoordsOffset,
+  DrawablePlotShape,
   EnclosureShape,
   EntitySelectionMode,
+  FreeStandingPlotShape,
   LineShape,
-  PlotShape,
   PanZoomState,
+  ResolvedNodeBoundEnclosureShape,
   SetSelection,
   ShapeSelectionInPlot,
 } from 'npbloom-core';
 import { Id } from '../../types';
-import { renderEnclosure } from './enclosures';
+import { renderFreeStandingEnclosure, renderNodeBoundEnclosure } from './enclosures';
 import { renderLine } from './lines';
 import useUiState from '../../useUiState';
 import './ShapeView.scss';
 
 interface ShapeViewProps {
-  shape: PlotShape;
+  shape: DrawablePlotShape;
   isSelected: boolean;
   panZoomState: PanZoomState;
   dragOffset?: ClientCoordsOffset;
-  resizePreviewShape?: PlotShape;
+  resizePreviewShape?: FreeStandingPlotShape;
   onMouseDown?: (event: React.MouseEvent<SVGElement>) => void;
   onSelect?: (id: Id, mode: EntitySelectionMode) => void;
   onResizeHandleMouseDown?: (handleId: string, event: React.MouseEvent<SVGElement>) => void;
@@ -43,7 +45,7 @@ const ShapeView: React.FC<ShapeViewProps> = ({
     dispatch(new SetSelection(applyShapeSelection(mode, [shapeId], existing)));
   };
 
-  // Mouse interaction is the same for all shapes - clicking selects the shape, dragging moves it.
+  // Mouse interaction is the same for all shapes - clicking selects the shape, dragging moves it (if possible).
   // Resizing is handled separately since it is different between shape types.
   const handleShapeMouseDown = ((event: React.MouseEvent<SVGElement>) => {
     event.stopPropagation();
@@ -53,10 +55,12 @@ const ShapeView: React.FC<ShapeViewProps> = ({
         ? EntitySelectionMode.AddToSelection
         : EntitySelectionMode.SetSelection
     );
-    onMouseDown && onMouseDown(event);
+    // Node-bound enclosures derive their position from their anchor node, so dragging them is a no-op.
+    // Selection still applies, but we don't start a move-drag for them.
+    if (!(shape instanceof ResolvedNodeBoundEnclosureShape)) onMouseDown && onMouseDown(event);
   });
 
-  if (shape instanceof EnclosureShape) return renderEnclosure(
+  if (shape instanceof EnclosureShape) return renderFreeStandingEnclosure(
     shape,
     isSelected,
     panZoomState,
@@ -74,6 +78,13 @@ const ShapeView: React.FC<ShapeViewProps> = ({
     resizePreviewShape as LineShape | undefined,
     handleShapeMouseDown,
     onResizeHandleMouseDown,
+  );
+
+  if (shape instanceof ResolvedNodeBoundEnclosureShape) return renderNodeBoundEnclosure(
+    shape,
+    isSelected,
+    panZoomState,
+    handleShapeMouseDown,
   );
 
   return null;

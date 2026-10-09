@@ -1,6 +1,11 @@
-import { ClientCoordsOffset, CoordsInClient, CoordsInPlot, coordsInPlotToCoordsInClient, EnclosureShape, PanZoomState } from 'npbloom-core';
+import { ClientCoordsOffset, CoordsInClient, CoordsInPlot, coordsInPlotToCoordsInClient, EnclosureShape,
+  PanZoomState, ResolvedNodeBoundEnclosureShape } from 'npbloom-core';
 import { renderHandles, snap } from './common';
 
+/**
+ * Base function for rendering the visible part of an enclosure.
+ * Used by both `renderFreeStandingEnclosure` and `renderNodeBoundEnclosure`.
+ */
 export const renderBaseEnclosure = (
   topLeft: CoordsInClient,
   width: number,
@@ -34,7 +39,7 @@ export const renderBaseEnclosure = (
       fill={fill ?? 'none'}
     />;
 
-export const renderEnclosure = (
+export const renderFreeStandingEnclosure = (
   shape: EnclosureShape,
   isSelected: boolean,
   panZoomState: PanZoomState,
@@ -76,12 +81,12 @@ export const renderEnclosure = (
     );
   }
 
-  let leftEdge = topLeft.clientX;
-  let topEdge = topLeft.clientY;
-  let rightEdge = leftEdge + width;
-  let bottomEdge = topEdge + height;
-  let centerX = leftEdge + width / 2;
-  let centerY = topEdge + height / 2;
+  const leftEdge = topLeft.clientX;
+  const topEdge = topLeft.clientY;
+  const rightEdge = leftEdge + width;
+  const bottomEdge = topEdge + height;
+  const centerX = leftEdge + width / 2;
+  const centerY = topEdge + height / 2;
 
   const snappedTopLeft = new CoordsInClient(
     snap(leftEdge, scaledStrokeWidth),
@@ -113,5 +118,53 @@ export const renderEnclosure = (
       {renderBaseEnclosure(topLeft, width, height, cornerRadius)}
     </g>}
     {resizeGhost}
+  </g>;
+};
+
+export const renderNodeBoundEnclosure = (
+  shape: ResolvedNodeBoundEnclosureShape,
+  isSelected: boolean,
+  panZoomState: PanZoomState,
+  onMouseDown?: (event: React.MouseEvent<SVGElement>) => void,
+) => {
+  const zoomLevel = panZoomState.zoomLevel;
+  const scaledStrokeWidth = shape.strokeWidth * zoomLevel;
+
+  const topLeft = coordsInPlotToCoordsInClient(new CoordsInPlot(shape.plotX, shape.plotY), panZoomState);
+  const width = shape.width * zoomLevel;
+  const height = shape.height * zoomLevel;
+  const cornerRadius = shape.cornerRadius * zoomLevel;
+
+  const snappedTopLeft = new CoordsInClient(
+    snap(topLeft.clientX, scaledStrokeWidth),
+    snap(topLeft.clientY, scaledStrokeWidth),
+  );
+
+  const leftEdge = topLeft.clientX;
+  const topEdge = topLeft.clientY;
+  const rightEdge = leftEdge + width;
+  const bottomEdge = topEdge + height;
+  const centerX = leftEdge + width / 2;
+  const centerY = topEdge + height / 2;
+
+  return <g className="ShapeView" onMouseDown={onMouseDown}>
+    {/* Visual: the actual shape, optionally snapped to pixel boundaries for better rendering quality */}
+    {renderBaseEnclosure(snappedTopLeft, width, height, cornerRadius, 'ShapeView--visual',
+      shape.strokeColor, scaledStrokeWidth, shape.fillColor ?? undefined)}
+
+    {/* Hit area: outline only, no fill, so interior elements remain interactive */}
+    {renderBaseEnclosure(topLeft, width, height, cornerRadius, 'ShapeView--hitarea', 'none')}
+
+    {/* Handles as selection indicator, no-op since the shape can't actually be resized */}
+    {isSelected && renderHandles([
+      { id: 'nw', x: leftEdge, y: topEdge },
+      { id: 'n', x: centerX, y: topEdge },
+      { id: 'ne', x: rightEdge, y: topEdge },
+      { id: 'e', x: rightEdge, y: centerY },
+      { id: 'se', x: rightEdge, y: bottomEdge },
+      { id: 's', x: centerX, y: bottomEdge },
+      { id: 'sw', x: leftEdge, y: bottomEdge },
+      { id: 'w', x: leftEdge, y: centerY },
+    ], () => {})}
   </g>;
 };

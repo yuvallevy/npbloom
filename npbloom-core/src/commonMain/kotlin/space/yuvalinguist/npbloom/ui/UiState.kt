@@ -71,9 +71,14 @@ enum class ChildNodeSide { Left, Right, Center }
 @JsExport class FoldSelectedNodes : UiAction
 @JsExport class UnfoldSelectedNodes : UiAction
 @JsExport class UnfoldSelectedNodesOneLevel : UiAction
-@JsExport class AddShapeToPlot(val shape: PlotShape) : UiAction
+@JsExport class AddShapeToPlot(val shape: PersistentPlotShape) : UiAction
 @JsExport class MoveSelectedShapes(val dx: Double, val dy: Double) : UiAction
-@JsExport class TransformSelectedShape(val newShape: PlotShape) : UiAction
+@JsExport class ResizeSelectedShape(
+    val handleId: String,
+    val dx: Double,
+    val dy: Double,
+    val snapTo45Deg: Boolean = false,
+) : UiAction
 @JsExport class SetShapeTool(val tool: ShapeTool) : UiAction
 
 @JsExport
@@ -712,12 +717,14 @@ fun uiReducer(state: UiState, action: UiAction, strWidthFunc: StrWidthFunc): UiS
             )
         }
 
-        is TransformSelectedShape -> {
-            if (state.selection !is ShapeSelectionInPlot) return state
+        is ResizeSelectedShape -> {
+            val shapeId = (state.selection as? ShapeSelectionInPlot)?.shapeIds?.singleOrNull() ?: return state
+            val shape = activePlot.shapes[shapeId] as? FreeStandingPlotShape ?: return state
+            val newShape = computeResizedShape(shape, action.handleId, action.dx, action.dy, action.snapTo45Deg)
             return state.copy(
                 contentState = contentReducer(
                     state.contentState,
-                    TransformShape(state.activePlotIndex, action.newShape.id, action.newShape)
+                    TransformShape(state.activePlotIndex, shapeId, newShape)
                 ),
             )
         }
