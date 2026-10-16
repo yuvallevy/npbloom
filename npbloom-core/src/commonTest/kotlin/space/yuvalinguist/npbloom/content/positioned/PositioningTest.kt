@@ -1,12 +1,20 @@
 package space.yuvalinguist.npbloom.content.positioned
 
 import space.yuvalinguist.npbloom.content.EntitySet
+import space.yuvalinguist.npbloom.content.NodeIndicatorInPlot
 import space.yuvalinguist.npbloom.content.StringSlice
 import space.yuvalinguist.npbloom.content.YAlignMode
 import space.yuvalinguist.npbloom.content.unpositioned.*
 import space.yuvalinguist.npbloom.mockStrWidth
+import space.yuvalinguist.npbloom.ui.NODE_AREA_HEIGHT
+import space.yuvalinguist.npbloom.ui.NODE_AREA_RELATIVE_X
+import space.yuvalinguist.npbloom.ui.NODE_AREA_RELATIVE_Y
+import space.yuvalinguist.npbloom.ui.NODE_AREA_WIDTH
+import space.yuvalinguist.npbloom.ui.NODE_ENCLOSURE_MARGIN_X
+import space.yuvalinguist.npbloom.ui.NODE_ENCLOSURE_MARGIN_Y
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class PositioningTest {
     private val treeWithTerminalNodes = UnpositionedTree(
@@ -159,5 +167,50 @@ class PositioningTest {
     fun measureTreeWidth() {
         val result = applyNodePositionsToTree(::mockStrWidth, treeWithBranchingAndTriangleNodes)
         assertEquals(123.0, result.width)
+    }
+
+    @Test
+    fun resolvesNodeBoundEnclosureGeometryFromAnchorNode() {
+        val plot = UnpositionedPlot(
+            trees = EntitySet(treeWithTerminalNodes),
+            shapes = EntitySet(
+                NodeBoundEnclosureShape(
+                    id = "e1",
+                    nodeIndicatorInPlot = NodeIndicatorInPlot(treeWithTerminalNodes.id, "a"),
+                    cornerRadius = 8.0,
+                ),
+            ),
+        )
+        val result = applyNodePositionsToPlot(::mockStrWidth, plot)
+        val shape = result.shapes["e1"] as ResolvedNodeBoundEnclosureShape
+        val tree = result.tree(treeWithTerminalNodes.id)
+        val nodePosition = tree.node("a").position
+        assertEquals(
+            tree.position.plotX + nodePosition.treeX + NODE_AREA_RELATIVE_X - NODE_ENCLOSURE_MARGIN_X,
+            shape.plotX
+        )
+        assertEquals(
+            tree.position.plotY + nodePosition.treeY + NODE_AREA_RELATIVE_Y - NODE_ENCLOSURE_MARGIN_Y,
+            shape.plotY
+        )
+        assertEquals(NODE_AREA_WIDTH + NODE_ENCLOSURE_MARGIN_X * 2, shape.width)
+        assertEquals(NODE_AREA_HEIGHT + NODE_ENCLOSURE_MARGIN_Y * 2, shape.height)
+        assertEquals(8.0, shape.cornerRadius)
+    }
+
+    @Test
+    fun leavesFreeStandingShapesUnchanged() {
+        val shape = EnclosureShape(id = "e2", x = 4.0, y = 8.0, width = 10.0, height = 20.0)
+        val plot = UnpositionedPlot(trees = EntitySet(treeWithTerminalNodes), shapes = EntitySet(shape))
+        val result = applyNodePositionsToPlot(::mockStrWidth, plot)
+        assertEquals(shape, result.shapes["e2"])
+    }
+
+    @Test
+    fun omitsNodeBoundEnclosureWithStaleAnchor() {
+        val shape = NodeBoundEnclosureShape(id = "e3", nodeIndicatorInPlot = NodeIndicatorInPlot("nonexistentTree", "x"))
+        val plot = UnpositionedPlot(trees = EntitySet(treeWithTerminalNodes), shapes = EntitySet(shape))
+        val result = applyNodePositionsToPlot(::mockStrWidth, plot)
+        assertNull(result.shapes["e3"])
     }
 }
