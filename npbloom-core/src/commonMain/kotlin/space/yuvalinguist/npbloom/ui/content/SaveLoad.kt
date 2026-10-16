@@ -19,22 +19,27 @@ private val treeMagicNumber = "59b1001174ee0000".hexToByteArray()
 
 // The format version is a 2-byte sequence that is incremented whenever the file format changes in a way that is not
 // backwards-compatible.
-private val formatVersion = byteArrayOf(2, 0)
-private val oldFormatVersions = listOf(byteArrayOf(1, 0), byteArrayOf(1, 1), byteArrayOf(1, 2), byteArrayOf(1, 3))
+private val formatVersion = byteArrayOf(2, 1)
+private val oldFormatVersions =
+    listOf(byteArrayOf(1, 0), byteArrayOf(1, 1), byteArrayOf(1, 2), byteArrayOf(1, 3), byteArrayOf(2, 0))
 
 // In versions 1.x the serialized object was a bare ContentState - no other metadata
 private val bareContentStateFormatVersions =
     listOf(byteArrayOf(1, 0), byteArrayOf(1, 1), byteArrayOf(1, 2), byteArrayOf(1, 3))
 
+// ignoreUnknownKeys makes decoding tolerant of fields that existed in older format versions and were since removed
+// (e.g. the node-level enclosure corner radius replaced by NodeBoundEnclosureShape in format 2.1).
+private val cbor = Cbor { ignoreUnknownKeys = true }
+
 @JsExport
 @JsName("fileContentsToByteArray")
 fun FileContents.toByteArray() =
-    forestMagicNumber + formatVersion + Cbor.encodeToByteArray(this)
+    forestMagicNumber + formatVersion + cbor.encodeToByteArray(this)
 
 @JsExport
 @JsName("treeToByteArray")
 fun UnpositionedTree.toByteArray() =
-    treeMagicNumber + formatVersion + Cbor.encodeToByteArray(this)
+    treeMagicNumber + formatVersion + cbor.encodeToByteArray(this)
 
 private fun formatVersionIsRecognized(fileFormatVersion: ByteArray) =
     fileFormatVersion.contentEquals(formatVersion) || oldFormatVersions.any(fileFormatVersion::contentEquals)
@@ -51,9 +56,9 @@ fun FileContents.Companion.fromByteArray(byteArray: ByteArray): FileContents {
     try {
         val decodedFileContents = if (isBareContentStateFormatVersion(fileFormatVersion)) {
             // Formats 1.0-1.3: body is a bare ContentState; wrap with empty plotPanZoomStates
-            FileContents(contentState = Cbor.decodeFromByteArray(body))
+            FileContents(contentState = cbor.decodeFromByteArray(body))
         } else {
-            Cbor.decodeFromByteArray(body)
+            cbor.decodeFromByteArray(body)
         }
         println("Decoded contents from file with format version ${fileFormatVersion.joinToString(".")}")
         return decodedFileContents
@@ -68,7 +73,7 @@ fun UnpositionedTree.Companion.fromByteArray(byteArray: ByteArray): Unpositioned
     if (!formatVersionIsRecognized(fileFormatVersion))
         error("Unrecognized file format version: ${fileFormatVersion.joinToString(".")}")
     try {
-        return Cbor.decodeFromByteArray(
+        return cbor.decodeFromByteArray(
             byteArray.sliceArray(treeMagicNumber.size + formatVersion.size until byteArray.size))
     } catch (e: SerializationException) {
         error("The file appears to be corrupt")
