@@ -96,7 +96,10 @@ data class UnpositionedPlot internal constructor(
         copy(
             trees = trees + groupNodeIdsByTree(nodeIndicators).mapValues { (treeId, nodeIds) ->
                 trees[treeId]!!.deleteNodes(nodeIds)
-            }.values
+            }.values,
+            // A node-bound enclosure is completely dependent on its anchor node.
+            // If the anchor node is deleted, the same fate should befall any associated enclosures.
+            shapes = shapes.filterNot { it is NodeBoundEnclosureShape && it.nodeIndicatorInPlot in nodeIndicators },
         )
 
     /**
@@ -108,7 +111,11 @@ data class UnpositionedPlot internal constructor(
     /**
      * Deletes the trees with the given IDs from the given plot.
      */
-    internal fun deleteTrees(treeIds: Set<Id>) = copy(trees = trees.deleteTrees(treeIds))
+    internal fun deleteTrees(treeIds: Set<Id>) = copy(
+        trees = trees.deleteTrees(treeIds),
+        // Whole-tree deletion doesn't go through deleteNodes/NodeIndicatorInPlot, so it needs its own cascade.
+        shapes = shapes.filterNot { it is NodeBoundEnclosureShape && it.nodeIndicatorInPlot.treeId in treeIds },
+    )
 
     // Shape operations
 

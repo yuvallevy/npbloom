@@ -348,4 +348,32 @@ class UnpositionedPlotTest {
         ),
         plot.deleteTrees(setOf("alex"))
     )
+
+    private val plotWithNodeBoundEnclosures = plot.copy(
+        shapes = EntitySet(
+            NodeBoundEnclosureShape(id = "shapeOnCleo", nodeIndicatorInPlot = NodeIndicatorInPlot("cleo", "np1")),
+            NodeBoundEnclosureShape(id = "shapeOnAlex", nodeIndicatorInPlot = NodeIndicatorInPlot("alex", "n2")),
+        ),
+    )
+
+    @Test
+    fun deleteNodesCascadesToAnchoredShape() =
+        assertEquals(
+            setOf("shapeOnAlex"),
+            plotWithNodeBoundEnclosures.deleteNodes(setOf(NodeIndicatorInPlot("cleo", "np1"))).shapes.ids
+        )
+
+    @Test
+    fun deleteNodesLeavesUnrelatedShapeAlone() =
+        assertEquals(
+            setOf("shapeOnCleo", "shapeOnAlex"),
+            plotWithNodeBoundEnclosures.deleteNodes(setOf(NodeIndicatorInPlot("alex", "v2"))).shapes.ids
+        )
+
+    @Test
+    fun deleteTreesCascadesToAnchoredShape() =
+        assertEquals(
+            setOf("shapeOnAlex"),
+            plotWithNodeBoundEnclosures.deleteTrees(setOf("cleo")).shapes.ids
+        )
 }
