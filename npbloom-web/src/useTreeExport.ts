@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { applyNodePositionsToPlot, TreeSelectionInPlot } from 'npbloom-core';
+import { applyNodePositionsToPlot, ResolvedNodeBoundEnclosureShape, TreeSelectionInPlot } from 'npbloom-core';
 import useUiState from './useUiState';
 import SettingsStateContext from './SettingsStateContext';
 import { saveBlob } from './io/systemFileIoImpl';
@@ -36,6 +36,15 @@ const removeNonExportElements = (element: Element) => {
     if (child.hasAttribute('data-npb-export')) return;
     removeNonExportElements(child);
     if (child.children.length === 0) child.remove();
+  });
+};
+
+const removeTransformsFromElementTree = (element: SVGElement) => {
+  element.style.transform = '';
+  Array.from(element.children).forEach(child => {
+    if (child instanceof SVGElement) {
+      removeTransformsFromElementTree(child);
+    }
   });
 };
 
@@ -114,11 +123,21 @@ const useTreeExport = () => {
     // Find the <g> element corresponding to the tree, and clone it for export
     const treeGroup = document.getElementById(`tree-${treeId}`);
     if (!treeGroup) return;
-    const clone = treeGroup.cloneNode(true) as SVGGElement;
-    clone.style.transform = '';
+    const clones = [treeGroup.cloneNode(true) as SVGGElement];
 
-    // Remove elements that are not marked for export
-    removeNonExportElements(clone);
+    // Find shape elements corresponding to the bound enclosures in this tree
+    const boundEnclosureGroups = plot.shapes
+      .filter(shape => shape instanceof ResolvedNodeBoundEnclosureShape && shape.nodeIndicatorInPlot.treeId === treeId)
+      .map(shape => document.getElementById(`shape-${shape.id}`) as (SVGGElement | null))
+      .filter(shape => shape)
+      .map(shape => (shape as SVGGElement).cloneNode(true)) as SVGGElement[];
+    clones.push(...boundEnclosureGroups);
+
+    // Reset translations on all clones and remove elements that are not marked for export
+    clones.forEach(clone => {
+      removeTransformsFromElementTree(clone);
+      removeNonExportElements(clone);
+    });
 
     // Determine the area we need for the tree to fit
     const viewBoxX = -EXPORT_PADDING_X;
@@ -139,8 +158,9 @@ const useTreeExport = () => {
     sentenceText.textContent = tree.sentence;
     exportSvg.appendChild(sentenceText);
 
-    // Finally, add the cloned tree group on top - the locations will already match
-    exportSvg.appendChild(clone);
+    // Finally, add the cloned groups on top - the locations will already match, even for bound enclosures,
+    // thanks to their two-layer positioning system (the outer layer is simply discarded)
+    clones.forEach(clone => exportSvg.appendChild(clone));
 
     const filename = (tree.sentence.replace(/[^a-z0-9]+/gi, '_').toLowerCase().slice(0, 30) || 'tree') + '.png';
     saveSvgAsImage(exportSvg, filename);
