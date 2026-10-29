@@ -185,14 +185,10 @@ class PositioningTest {
         val shape = result.shapes["e1"] as ResolvedNodeBoundEnclosureShape
         val tree = result.tree(treeWithTerminalNodes.id)
         val nodePosition = tree.node("a").position
-        assertEquals(
-            tree.position.plotX + nodePosition.treeX + NODE_AREA_RELATIVE_X - NODE_ENCLOSURE_MARGIN_X,
-            shape.plotX
-        )
-        assertEquals(
-            tree.position.plotY + nodePosition.treeY + NODE_AREA_RELATIVE_Y - NODE_ENCLOSURE_MARGIN_Y,
-            shape.plotY
-        )
+        assertEquals(tree.position.plotX, shape.anchorPlotX)
+        assertEquals(tree.position.plotY, shape.anchorPlotY)
+        assertEquals(nodePosition.treeX + NODE_AREA_RELATIVE_X - NODE_ENCLOSURE_MARGIN_X, shape.treeX)
+        assertEquals(nodePosition.treeY + NODE_AREA_RELATIVE_Y - NODE_ENCLOSURE_MARGIN_Y, shape.treeY)
         assertEquals(NODE_AREA_WIDTH + NODE_ENCLOSURE_MARGIN_X * 2, shape.width)
         assertEquals(NODE_AREA_HEIGHT + NODE_ENCLOSURE_MARGIN_Y * 2, shape.height)
         assertEquals(8.0, shape.cornerRadius)

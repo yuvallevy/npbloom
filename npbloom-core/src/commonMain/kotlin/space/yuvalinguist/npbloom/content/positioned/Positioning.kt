@@ -236,8 +236,10 @@ internal fun applyPositionToShape(
             strokeColor = shape.strokeColor,
             strokeWidth = shape.strokeWidth,
             fillColor = shape.fillColor,
-            plotX = tree.position.plotX + node.position.treeX + NODE_AREA_RELATIVE_X - NODE_ENCLOSURE_MARGIN_X,
-            plotY = tree.position.plotY + node.position.treeY + NODE_AREA_RELATIVE_Y - NODE_ENCLOSURE_MARGIN_Y,
+            anchorPlotX = tree.position.plotX,
+            anchorPlotY = tree.position.plotY,
+            treeX = node.position.treeX + NODE_AREA_RELATIVE_X - NODE_ENCLOSURE_MARGIN_X,
+            treeY = node.position.treeY + NODE_AREA_RELATIVE_Y - NODE_ENCLOSURE_MARGIN_Y,
             width = NODE_AREA_WIDTH + NODE_ENCLOSURE_MARGIN_X * 2,
             height = NODE_AREA_HEIGHT + NODE_ENCLOSURE_MARGIN_Y * 2,
         )

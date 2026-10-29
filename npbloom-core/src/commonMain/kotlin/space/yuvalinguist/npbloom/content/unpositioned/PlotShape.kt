@@ -114,8 +114,14 @@ data class ResolvedNodeBoundEnclosureShape(
     override val strokeColor: String,
     override val strokeWidth: Double,
     val fillColor: String?,
-    val plotX: Double,
-    val plotY: Double,
+    // Resolved position is split into two components:
+    // - anchor in plot - where the anchor of the tree is located within the plot
+    //   (top left of the text/bottom left of the nodes)
+    // - position in tree - where the shape is located relative to the anchor of the tree
+    val anchorPlotX: Double,
+    val anchorPlotY: Double,
+    val treeX: Double,
+    val treeY: Double,
     val width: Double,
     val height: Double,
 ) : DrawablePlotShape

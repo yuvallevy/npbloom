@@ -1,5 +1,5 @@
 import { ClientCoordsOffset, CoordsInClient, CoordsInPlot, coordsInPlotToCoordsInClient, EnclosureShape,
-  PanZoomState, ResolvedNodeBoundEnclosureShape } from 'npbloom-core';
+  PanZoomState, PlotCoordsOffset, plotCoordsOffsetToClientCoordsOffset, ResolvedNodeBoundEnclosureShape } from 'npbloom-core';
 import { renderHandles, snap } from './common';
 
 /**
@@ -7,7 +7,10 @@ import { renderHandles, snap } from './common';
  * Used by both `renderFreeStandingEnclosure` and `renderNodeBoundEnclosure`.
  */
 export const renderBaseEnclosure = (
-  topLeft: CoordsInClient,
+  // Anchor is only meaningful for bound enclosures, where it is the same as the anchor of the parent tree.
+  // For free-standing enclosures, which are always plot-level, the anchor is (0, 0).
+  // ClientCoordsOffset is used here rather than CoordsInClient because this value can be relative.
+  topLeftFromAnchor: ClientCoordsOffset,
   width: number,
   height: number,
   cornerRadius: number,
@@ -21,14 +24,14 @@ export const renderBaseEnclosure = (
     'data-npb-export': exportInGraphics ? 'true' : undefined };
   return cornerRadius === Infinity
     ? <ellipse {...commonProps}
-      cx={topLeft.clientX + width / 2}
-      cy={topLeft.clientY + height / 2}
+      cx={topLeftFromAnchor.dClientX + width / 2}
+      cy={topLeftFromAnchor.dClientY + height / 2}
       rx={width / 2}
       ry={height / 2}
     />
     : <rect {...commonProps}
-      x={topLeft.clientX}
-      y={topLeft.clientY}
+      x={topLeftFromAnchor.dClientX}
+      y={topLeftFromAnchor.dClientY}
       width={width}
       height={height}
       rx={cornerRadius}
@@ -70,7 +73,7 @@ export const renderFreeStandingEnclosure = (
     const previewHeight = resizePreviewShape.height * zoomLevel;
     const previewCornerRadius = resizePreviewShape.cornerRadius * zoomLevel;
     resizeGhost = renderBaseEnclosure(
-      previewTopLeft,
+      previewTopLeft.toOffset(),
       previewWidth,
       previewHeight,
       previewCornerRadius,
@@ -92,11 +95,11 @@ export const renderFreeStandingEnclosure = (
 
   return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
     {/* Visual: the actual shape, optionally snapped to pixel boundaries for better rendering quality */}
-    {renderBaseEnclosure(snappedTopLeft, width, height, cornerRadius, 'ShapeView--visual',
+    {renderBaseEnclosure(snappedTopLeft.toOffset(), width, height, cornerRadius, 'ShapeView--visual',
       shape.strokeColor, scaledStrokeWidth, shape.fillColor ?? undefined)}
 
     {/* Hit area: outline only, no fill, so interior elements remain interactive */}
-    {renderBaseEnclosure(topLeft, width, height, cornerRadius, 'ShapeView--hitarea', 'none')}
+    {renderBaseEnclosure(topLeft.toOffset(), width, height, cornerRadius, 'ShapeView--hitarea', 'none')}
 
     {/* Handles: only rendered when selected, so they don't interfere with interaction when not needed */}
     {isSelected && onResizeHandleMouseDown && renderHandles([
@@ -112,7 +115,7 @@ export const renderFreeStandingEnclosure = (
 
     {/* Drag preview: render a ghost of the shape being dragged, transformed to the current mouse position */}
     {moveGhostTransform && <g className="ShapeView--ghost" style={{ transform: moveGhostTransform }}>
-      {renderBaseEnclosure(topLeft, width, height, cornerRadius)}
+      {renderBaseEnclosure(topLeft.toOffset(), width, height, cornerRadius)}
     </g>}
     {resizeGhost}
   </g>;
@@ -127,30 +130,38 @@ export const renderNodeBoundEnclosure = (
   const zoomLevel = panZoomState.zoomLevel;
   const scaledStrokeWidth = shape.strokeWidth * zoomLevel;
 
-  const topLeft = coordsInPlotToCoordsInClient(new CoordsInPlot(shape.plotX, shape.plotY), panZoomState);
+  const anchorTopLeft = coordsInPlotToCoordsInClient(new CoordsInPlot(shape.anchorPlotX, shape.anchorPlotY), panZoomState);
+  const topLeftInTree = plotCoordsOffsetToClientCoordsOffset(new PlotCoordsOffset(shape.treeX, shape.treeY), panZoomState);
   const width = shape.width * zoomLevel;
   const height = shape.height * zoomLevel;
   const cornerRadius = shape.cornerRadius * zoomLevel;
 
-  const snappedTopLeft = new CoordsInClient(
-    snap(topLeft.clientX, scaledStrokeWidth),
-    snap(topLeft.clientY, scaledStrokeWidth),
+  const snappedAnchorTopLeft = new CoordsInClient(
+    snap(anchorTopLeft.clientX, scaledStrokeWidth),
+    snap(anchorTopLeft.clientY, scaledStrokeWidth),
+  );
+  const snappedTopLeftInTree = new ClientCoordsOffset(
+    snap(topLeftInTree.dClientX, scaledStrokeWidth),
+    snap(topLeftInTree.dClientY, scaledStrokeWidth),
   );
 
-  const leftEdge = topLeft.clientX;
-  const topEdge = topLeft.clientY;
+  const leftEdge = topLeftInTree.dClientX;
+  const topEdge = topLeftInTree.dClientY;
   const rightEdge = leftEdge + width;
   const bottomEdge = topEdge + height;
   const centerX = leftEdge + width / 2;
   const centerY = topEdge + height / 2;
 
-  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
+  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`} style={{
+    transform: snappedAnchorTopLeft ? `translate(${snappedAnchorTopLeft.clientX}px, ${snappedAnchorTopLeft.clientY}px)` : ''
+  }}>
     {/* Visual: the actual shape, optionally snapped to pixel boundaries for better rendering quality */}
-    {renderBaseEnclosure(snappedTopLeft, width, height, cornerRadius, 'ShapeView--visual',
-      shape.strokeColor, scaledStrokeWidth, shape.fillColor ?? undefined)}
+    {renderBaseEnclosure(snappedTopLeftInTree, width, height, cornerRadius, 'ShapeView--visual',
+      shape.strokeColor, scaledStrokeWidth, shape.fillColor ?? undefined, /* exportInGraphics = */ true)}
 
     {/* Hit area: outline only, no fill, so interior elements remain interactive */}
-    {renderBaseEnclosure(topLeft, width, height, cornerRadius, 'ShapeView--hitarea', 'none')}
+    {renderBaseEnclosure(topLeftInTree, width, height, cornerRadius, 'ShapeView--hitarea', 'none',
+      /* strokeWidth = */ undefined, /* fill = */ undefined)}
 
     {/* Handles as selection indicator, no-op since the shape can't actually be resized */}
     {isSelected && renderHandles([
