@@ -93,7 +93,7 @@ export const renderFreeStandingEnclosure = (
     snap(topEdge, scaledStrokeWidth),
   );
 
-  return <g className="ShapeView" onMouseDown={onMouseDown}>
+  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
     {/* Visual: the actual shape, optionally snapped to pixel boundaries for better rendering quality */}
     {renderBaseEnclosure(snappedTopLeft, width, height, cornerRadius, 'ShapeView--visual',
       shape.strokeColor, scaledStrokeWidth, shape.fillColor ?? undefined)}
@@ -147,7 +147,7 @@ export const renderNodeBoundEnclosure = (
   const centerX = leftEdge + width / 2;
   const centerY = topEdge + height / 2;
 
-  return <g className="ShapeView" onMouseDown={onMouseDown}>
+  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
     {/* Visual: the actual shape, optionally snapped to pixel boundaries for better rendering quality */}
     {renderBaseEnclosure(snappedTopLeft, width, height, cornerRadius, 'ShapeView--visual',
       shape.strokeColor, scaledStrokeWidth, shape.fillColor ?? undefined)}

@@ -71,7 +71,7 @@ export const renderLine = (
     snap(lineEnd.clientY, scaledStrokeWidth),
   );
 
-  return <g className="ShapeView" onMouseDown={onMouseDown}>
+  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
     {/* Visual: the actual line, optionally snapped to pixel boundaries for better rendering quality */}
     <line className="ShapeView--visual"
       x1={snappedStart.clientX}
