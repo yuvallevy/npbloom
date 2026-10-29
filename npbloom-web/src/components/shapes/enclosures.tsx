@@ -15,29 +15,26 @@ export const renderBaseEnclosure = (
   stroke?: string,
   strokeWidth?: number,
   fill?: string,
-) => cornerRadius === Infinity
-  ? <ellipse
-      className={className}
+  exportInGraphics?: boolean,
+) => {
+  const commonProps = { className, stroke, strokeWidth, fill: fill ?? 'none',
+    'data-npb-export': exportInGraphics ? 'true' : undefined };
+  return cornerRadius === Infinity
+    ? <ellipse {...commonProps}
       cx={topLeft.clientX + width / 2}
       cy={topLeft.clientY + height / 2}
       rx={width / 2}
       ry={height / 2}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-      fill={fill ?? 'none'}
     />
-  : <rect
-      className={className}
+    : <rect {...commonProps}
       x={topLeft.clientX}
       y={topLeft.clientY}
       width={width}
       height={height}
       rx={cornerRadius}
       ry={cornerRadius}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-      fill={fill ?? 'none'}
     />;
+};
 
 export const renderFreeStandingEnclosure = (
   shape: EnclosureShape,
