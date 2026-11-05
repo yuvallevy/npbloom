@@ -245,7 +245,9 @@ const usePlotMouseInteractions = (
   const handleResizeHandleMouseDown = (handleId: string, event: React.MouseEvent<SVGElement>) => {
     if (event.buttons === PRIMARY_MOUSE_BUTTON && selectedShapeIds.length === 1) {
       const selectedShape = plot.shapes.get(selectedShapeIds[0]);
-      // Only free-standing shapes are resizable (and only they render usable resize handles)
+      // Only free-standing shapes are resizable (and only they render usable resize handles).
+      // Use asFreeStandingShape to make sure the shape is a free-standing shape before attempting to resize it.
+      // (Can't check instancehood directly here because Kotlin interfaces don't exist in JavaScript at runtime.)
       const shape = selectedShape && asFreeStandingShape(selectedShape);
       if (shape) {
         setMouseInteractionMode(MouseInteractionMode.ResizingShape);
