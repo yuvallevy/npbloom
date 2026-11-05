@@ -64,12 +64,31 @@ For a time, NPBloom did actually use a recursive structure for its internal repr
 
 Beyond trees, NPBloom also allows inserting arbitrary shapes into the canvas. These are useful, for example, for illustrating relations between trees or highlighting specific nodes for emphasis.
 
-Shapes are implemented as a separate data structure from trees, since they are not part of the tree structure and do not have any inherent relationship with the nodes. They are stored in an `EntitySet<Shape>` in the UI state, with each shape having its own position and dimensions on the canvas. Shapes can be moved around and resized independently of the trees and each other.
+Shapes are implemented as a separate data structure from trees, since they are not part of the tree structure. They are stored per plot, in `UnpositionedPlot.shapes` (an `EntitySet`), alongside the trees in the plot. Shapes can be free-standing, having their own position and dimensions on the canvas and able to be moved and resized freely, or they can be bound to specific nodes, with no independent control over position or size.
 
-There are two classes of shapes: `LineShape` and `EnclosureShape`. `LineShape` is a straight line between two points, with an optional arrowhead at one or both ends. `EnclosureShape` is a closed shape defined by a bounding box, with an optional corner radius determining whether it should be drawn as a rectangle (radius = 0), an ellipse (radius = infinity), or a rounded rectangle (radius > 0).
+Shapes come in two parallel hierarchies, mirroring the split between unpositioned and positioned trees and nodes:
+* `PersistentPlotShape`: the form that is stored in an `UnpositionedPlot`, serialized when saving, and changed by content actions.
+* `DrawablePlotShape`: the form produced by the positioning pass for a `PositionedPlot` and subsequently rendered on the frontend.
+
+As with trees, conversion only goes one way (persistent → drawable), as part of the positioning pass. Some shapes don't need converting at all: `FreeStandingPlotShape` implements both interfaces, because a shape defined in absolute plot coordinates is already drawable as it is stored. Only free-standing shapes can be resized.
+
+All shape types live in a single file, `content/unpositioned/PlotShape.kt`. This is not a stylistic choice: Kotlin requires subtypes of a sealed type to share its package, and splitting them up would mean giving up the exhaustive `when` checks that sealed types provide. There is a TODO in that file to look for a way around this.
+
+There are two classes of free-standing shapes: `LineShape` and `EnclosureShape`. `LineShape` is a straight line between two points, with an optional arrowhead at one or both ends. `EnclosureShape` is a closed shape defined by a bounding box, with an optional corner radius determining whether it should be drawn as a rectangle (radius = 0), an ellipse (radius = infinity), or a rounded rectangle (radius > 0).
+
+###### Node-bound enclosures
+
+A common use for enclosures is circling or boxing a single node, e.g. when demonstrating garden-path reanalyses. If such an enclosure were free-standing, it would be left behind as soon as the node moved - whether because the user dragged it, the sentence was edited, or the tree was restructured. `NodeBoundEnclosureShape` solves this by anchoring the enclosure to the node itself.
+
+A `NodeBoundEnclosureShape` is a `PersistentPlotShape` but _not_ a `DrawablePlotShape`. It stores its `id`, a `nodeIndicatorInPlot` pointing to its anchor node, a corner radius, and stroke/fill styling, but no position or size; these missing details are only worked out in the positioning pass, based on wherever the anchor node ended up (see the end of the section on the layout algorithm).
+
+The user doesn't choose between free-standing and node-bound enclosures; NPBloom infers it. When the user finishes dragging out an enclosure, `createShapeFromDrag` (in `ui/MouseInteractions.kt`) determines whether it is node-bound or free-standing based on whether there is a single node enclosed in it.
+
+`move()` on a node-bound enclosure is a no-op, since the enclosure moves with its node and has no position of its own to change. Resizing is not possible, since the size is fixed. `ResizeSelectedShape` on a node-bound enclosure is currently a no-op, though this may change in the future.
+
+A node-bound enclosure cannot outlive its anchor. The return value of `UnpositionedPlot.deleteNodes` excludes any enclosure whose anchor is among the deleted nodes, and `deleteTrees` does the same for any enclosure anchored to a deleted tree. A node-bound enclosure can still be selected and deleted by itself, like any other shape.
 
 Future plans for shapes are:
-* Allowing shapes to be associated with specific nodes, trees, or slices, so that they can be anchored to them and move with them when they are moved.
 * Adding an "arc" or "curve" shape type. This could be useful for illustrating syntactic movements, for example by drawing a curved line from the trace of a moved constituent to its destination.
 
 #### A note on serialization
@@ -100,6 +119,14 @@ In subsequent calls, branching nodes whose children have all been positioned can
 This process continues until the set of nodes to position is empty. At this point the set of already-positioned nodes is returned as the final result.
 
 If you've been reading the code as you go, you may have noticed the elephant in the room I've been avoiding: `strWidthFunc`. The layout algorithm needs to know the width of each slice in the sentence in order to position the nodes correctly, which means it needs to be able to call a function to measure the width of a string in pixels. Since `npbloom-core` is platform-agnostic and does not contain any graphics code, it can only take this as a function injected from the frontend. This is an example of the design philosophy behind `npbloom-core`, allowing the frontend to inject any necessary platform-specific logic while keeping the core logic independent and reusable.
+
+##### Positioning shapes
+
+Once all the trees in a plot have been positioned, `applyNodePositionsToPlot` runs each of the plot's shapes through `applyPositionToShape`, which turns a `PersistentPlotShape` into a `DrawablePlotShape`. Free-standing shapes are returned as-is. Node-bound enclosures are resolved into a `ResolvedNodeBoundEnclosureShape`, now with explicit positions and dimensions.
+
+The resolved position of a node-bound enclosure is deliberately split into two components: `anchorPlotX`/`anchorPlotY`, which is the position of the anchor _tree_ in the plot, and `treeX`/`treeY`, which is the position of the enclosure relative to that tree. (Width and height are stored separately.) Adding the two gives the enclosure's absolute position in the plot, which is all that the main plot view needs. Keeping them separate helps consumers that work in tree-local coordinates, such as single-tree export: they can drop the anchor and use the in-tree position directly, without having to know anything about the tree's position or the current pan/zoom state.
+
+`PositionedPlot.positionShape` exposes the same conversion for a shape that isn't part of the plot (yet). The frontend uses this to render the preview while a shape is being drawn, so the preview snaps around a node as soon as the drag would create a node-bound enclosure, giving the user an indication of what's about to happen.
 
 #### The rest of the `content` package
 
@@ -408,16 +435,27 @@ Finally, `TreeView` renders a box around the entire tree when it is selected, wh
 
 #### `ShapeView`
 
-`ShapeView` is the equivalent of `TreeView` for shapes, which are the rectangles and ellipses that users can create to annotate the plot. It is responsible for rendering these shapes and connecting them to the mouse interaction system for dragging and resizing. Since shapes are not part of the tree structure, they are rendered directly within `PlotView` rather than within `TreeView`. They also have their own selection logic, separate from the node and tree selection, which is handled by `ShapeView`.
+`ShapeView` is the equivalent of `TreeView` for shapes, which are the lines, arrows, and enclosures that users can create to annotate the plot. It is responsible for rendering these shapes and connecting them to the mouse interaction system for dragging and resizing. Since shapes are not part of the tree structure, they are rendered directly within `PlotView` rather than within `TreeView` (this extends to node-bo). They also have their own selection logic, separate from the node and tree selection, which is handled by `ShapeView`.
 
-The rendering logic for `ShapeView` consists of five parts:
-* The visual representation of the shape itself, which is either a rectangle or an ellipse based on the shape's properties.
+`ShapeView` receives a `DrawablePlotShape` from the positioned plot and dispatches it to one of three render functions: `renderLine` (in `shapes/lines.tsx`), or `renderFreeStandingEnclosure` or `renderNodeBoundEnclosure` (in `shapes/enclosures.tsx`). Both enclosure renderers draw the shape itself with `renderBaseEnclosure`. Its position and size parameters are deliberately plain numbers with no specified coordinate system (plot/tree/client): it only writes them into SVG attributes, and what they mean depends on the transform of the group the caller places the result in. Free-standing enclosures pass client coordinates, while node-bound enclosures pass tree coordinates (see below). The typed coordinates live in the callers, which are where the conversions between spaces happen. Each shape is wrapped in a `<g>` with the ID `shape-<id>`, which is how single-tree export finds it.
+
+The rendering logic for free-standing shapes consists of five parts:
+* The visual representation of the shape itself: a line, a rectangle, or an ellipse, based on the shape's properties.
 * A thick, invisible border around the shape that serves as the trigger for dragging the shape around. This is necessary since thin borders can be hard to click on, especially when the shape is small.
 * Small squares ("handles") that serve as triggers for resizing the shape. For lines, these are shown at the endpoints; for enclosures, they are shown at the corners and midpoints of the edges. These are only visible when the shape is selected, and they allow the user to click and drag to resize the shape in different directions.
 * A ghost for the shape that appears when the user is dragging it, showing where the shape will be dropped if the user releases the mouse button at that moment.
 * A ghost for the shape that appears when the user is resizing it by dragging one of the handles, showing the new dimensions of the shape as it is being resized.
 
 The mouse dragging behavior for shapes is implemented in the `usePlotMouseInteractions` hook, similarly to the dragging behavior for nodes and trees. When the user clicks and drags on a shape, the hook updates the `mouseInteractionMode` to `DraggingShapes`, and the corresponding `UiAction` is dispatched when the mouse button is released to apply the change to the state. A similar process applies to resizing shapes by dragging the handles.
+
+Node-bound enclosures are rendered differently. The visual part is drawn in tree coordinates, inside a `<g>` with exactly the same transform as the anchor tree's group in `TreeView`: `translate(...)` to the tree's position in client coordinates, then `scale(zoomLevel)`. This mirrors the two-component position of `ResolvedNodeBoundEnclosureShape` described in the section on positioning shapes. Sharing the tree's transform means the enclosure lines up with its node at any zoom level, and that single-tree export can strip the transform from both and have them still line up. It also means the visual is not pixel-snapped, since it must render exactly like the tree it belongs to.
+
+The hit area and handles, on the other hand, have fixed on-screen sizes regardless of zoom level, which a scaled group would distort. They are drawn outside the scaled layer, in client coordinates computed the same way as for free-standing enclosures. As they are not marked for export, they never affect the exported image.
+
+Beyond that, node-bound enclosures differ from free-standing ones in a few ways:
+* Clicking selects them as usual, but `handleShapeMouseDown` doesn't start a drag, since they can't be moved directly. Consequently, they have no move ghost.
+* Handles are rendered when the enclosure is selected, but only as a selection indicator; their mouse handler does nothing, and there is no resize ghost.
+* The visual layer is marked with `data-npb-export`, so it is included in single-tree export. (Free-standing shapes do not need this since they are plot-level entities excluded from tree-level export.)
 
 ### Main menu, toolbox, and other UI components
 
@@ -589,6 +627,16 @@ The clipboard is currently only used for copying and pasting entire trees (no su
 Currently, the only place this is used is in the "Export to labelled bracket notation" feature, which generates a labelled bracket notation representation of the currently selected tree and displays it in the modal for the user to copy. This modal also includes the "Open in" menu, containing the option to open the tree in [Miles Shang's Syntax Tree Generator](https://mshang.ca/syntree/), a popular online tool for visualizing syntax trees that uses labelled bracket notation as its input format.
 
 In the future, this will be used for other export formats as well, such as LaTeX. "Open in" will likewise be expanded to include any relevant external tools that can take the generated output as input, such as LaTeX editors for LaTeX output.
+
+#### Exporting a tree as an image
+
+The `useTreeExport` hook (`useTreeExport.ts`) implements exporting the currently selected tree as a PNG image. Rather than rendering the tree from scratch, it reuses the SVG that is already on screen:
+1. Clones the tree's `<g>` element (ID `tree-<id>`), along with the `shape-<id>` group of every node-bound enclosure anchored to that tree.
+2. Strips the transforms from every element in the clones (`removeTransformsFromElementTree`). For the tree, this removes its translation into the plot, leaving its contents in tree coordinates. For node-bound enclosures, it removes the tree-matching transform from the visual layer, leaving the enclosure in tree coordinates too - so the two line up without any further calculation, regardless of zoom level.
+3. Removes every element that is not marked with `data-npb-export` and has no marked descendants (`removeNonExportElements`). This gets rid of interactive elements like hit areas, handles, and node creation triggers.
+4. Puts the clones in a fresh SVG together with the sentence, sized to fit the tree, renders it to an image, and saves it as a PNG.
+
+Free-standing shapes are never included in a tree export, even if they overlap the tree, since they are plot-level entities not associated with any particular tree.
 
 ### `meta/` components
 
