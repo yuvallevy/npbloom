@@ -21,6 +21,7 @@ import './ShapeView.scss';
 interface ShapeViewProps {
   shape: DrawablePlotShape;
   isSelected: boolean;
+  acceptMouseEvents?: boolean;
   panZoomState: PanZoomState;
   dragOffset?: ClientCoordsOffset;
   resizePreviewShape?: FreeStandingPlotShape;
@@ -32,6 +33,7 @@ interface ShapeViewProps {
 const ShapeView: React.FC<ShapeViewProps> = ({
   shape,
   isSelected,
+  acceptMouseEvents = true,
   panZoomState,
   dragOffset,
   resizePreviewShape,
@@ -68,6 +70,7 @@ const ShapeView: React.FC<ShapeViewProps> = ({
     resizePreviewShape as EnclosureShape | undefined,
     handleShapeMouseDown,
     onResizeHandleMouseDown,
+    acceptMouseEvents,
   );
 
   if (shape instanceof LineShape) return renderLine(
@@ -78,6 +81,7 @@ const ShapeView: React.FC<ShapeViewProps> = ({
     resizePreviewShape as LineShape | undefined,
     handleShapeMouseDown,
     onResizeHandleMouseDown,
+    acceptMouseEvents,
   );
 
   if (shape instanceof ResolvedNodeBoundEnclosureShape) return renderNodeBoundEnclosure(
@@ -85,6 +89,7 @@ const ShapeView: React.FC<ShapeViewProps> = ({
     isSelected,
     panZoomState,
     handleShapeMouseDown,
+    acceptMouseEvents,
   );
 
   return null;

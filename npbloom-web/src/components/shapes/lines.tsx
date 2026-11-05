@@ -1,5 +1,5 @@
 import { Arrowhead, ClientCoordsOffset, CoordsInClient, coordsInPlotToCoordsInClient, LineShape, PanZoomState } from 'npbloom-core';
-import { renderHandles, snap } from './common';
+import { renderHandles, shapeViewClassName, snap } from './common';
 
 const ARROWHEAD_LENGTH = 10;
 
@@ -30,6 +30,7 @@ export const renderLine = (
   resizePreviewShape?: LineShape,
   onMouseDown?: (event: React.MouseEvent<SVGElement>) => void,
   onResizeHandleMouseDown?: (handleId: string, event: React.MouseEvent<SVGElement>) => void,
+  acceptMouseEvents = true,
 ) => {
   const zoomLevel = panZoomState.zoomLevel;
   const scaledStrokeWidth = shape.strokeWidth * zoomLevel;
@@ -71,7 +72,7 @@ export const renderLine = (
     snap(lineEnd.clientY, scaledStrokeWidth),
   );
 
-  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
+  return <g className={shapeViewClassName(acceptMouseEvents)} onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
     {/* Visual: the actual line, optionally snapped to pixel boundaries for better rendering quality */}
     <line className="ShapeView--visual"
       x1={snappedStart.clientX}

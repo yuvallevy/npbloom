@@ -1,6 +1,6 @@
 import { ClientCoordsOffset, CoordsInClient, CoordsInPlot, coordsInPlotToCoordsInClient, EnclosureShape,
   PanZoomState, PlotCoordsOffset, plotCoordsOffsetToClientCoordsOffset, ResolvedNodeBoundEnclosureShape } from 'npbloom-core';
-import { renderHandles, snap } from './common';
+import { renderHandles, shapeViewClassName, snap } from './common';
 
 /**
  * Base function for rendering the visible part of an enclosure.
@@ -47,6 +47,7 @@ export const renderFreeStandingEnclosure = (
   resizePreviewShape?: EnclosureShape,
   onMouseDown?: (event: React.MouseEvent<SVGElement>) => void,
   onResizeHandleMouseDown?: (handleId: string, event: React.MouseEvent<SVGElement>) => void,
+  acceptMouseEvents = true,
 ) => {
   const zoomLevel = panZoomState.zoomLevel;
   const scaledStrokeWidth = shape.strokeWidth * zoomLevel;
@@ -93,7 +94,7 @@ export const renderFreeStandingEnclosure = (
     snap(topEdge, scaledStrokeWidth),
   );
 
-  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
+  return <g className={shapeViewClassName(acceptMouseEvents)} onMouseDown={onMouseDown} id={`shape-${shape.id}`}>
     {/* Visual: the actual shape, optionally snapped to pixel boundaries for better rendering quality */}
     {renderBaseEnclosure(snappedTopLeft.toOffset(), width, height, cornerRadius, 'ShapeView--visual',
       shape.strokeColor, scaledStrokeWidth, shape.fillColor ?? undefined)}
@@ -126,6 +127,7 @@ export const renderNodeBoundEnclosure = (
   isSelected: boolean,
   panZoomState: PanZoomState,
   onMouseDown?: (event: React.MouseEvent<SVGElement>) => void,
+  acceptMouseEvents = true,
 ) => {
   const zoomLevel = panZoomState.zoomLevel;
   const scaledStrokeWidth = shape.strokeWidth * zoomLevel;
@@ -152,7 +154,7 @@ export const renderNodeBoundEnclosure = (
   const centerX = leftEdge + width / 2;
   const centerY = topEdge + height / 2;
 
-  return <g className="ShapeView" onMouseDown={onMouseDown} id={`shape-${shape.id}`} style={{
+  return <g className={shapeViewClassName(acceptMouseEvents)} onMouseDown={onMouseDown} id={`shape-${shape.id}`} style={{
     transform: snappedAnchorTopLeft ? `translate(${snappedAnchorTopLeft.clientX}px, ${snappedAnchorTopLeft.clientY}px)` : ''
   }}>
     {/* Visual: the actual shape, optionally snapped to pixel boundaries for better rendering quality */}
@@ -173,6 +175,6 @@ export const renderNodeBoundEnclosure = (
       { id: 's', x: centerX, y: bottomEdge },
       { id: 'sw', x: leftEdge, y: bottomEdge },
       { id: 'w', x: leftEdge, y: centerY },
-    ], () => {})}
+    ], () => undefined)}
   </g>;
 };

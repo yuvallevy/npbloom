@@ -133,3 +133,10 @@
     stroke-dashoffset: -8px;
   }
 }
+
+// Applied when the tree should not capture mouse events, e.g. while the user is drawing a new shape.
+// Child elements set their own `pointer-events` (e.g. the tree area), which would override an inherited value,
+// so the rule must apply to all descendants explicitly.
+.TreeView--inert, .TreeView--inert * {
+  pointer-events: none !important;
+}

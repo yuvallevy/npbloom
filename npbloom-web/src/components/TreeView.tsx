@@ -55,6 +55,7 @@ interface TreeViewProps {
   treeId: Id;
   tree: PositionedTree;
   isAltHeld?: boolean;
+  acceptMouseEvents?: boolean;
   nodeDragOffset?: ClientCoordsOffset;
   treeDragOffset?: ClientCoordsOffset;
   onNodeMouseDown?: (event: React.MouseEvent<SVGElement>) => void;
@@ -254,6 +255,7 @@ const TreeView: React.FC<TreeViewProps> = ({
   treeId,
   tree,
   isAltHeld,
+  acceptMouseEvents = true,
   nodeDragOffset,
   treeDragOffset,
   onNodeMouseDown,
@@ -309,6 +311,7 @@ const TreeView: React.FC<TreeViewProps> = ({
     />);
 
   return <g id={`tree-${treeId}`}
+            className={acceptMouseEvents ? undefined : 'TreeView--inert'}
             style={{ transform: `translate(${treePositionInClient.clientX}px, ${treePositionInClient.clientY}px) scale(${state.panZoomState.zoomLevel})` }}>
     <g className={'TreeView--tree-handle' + (selectedTreeIds.includes(treeId) ? ' TreeView--tree-handle--selected' : '')}>
       <rect

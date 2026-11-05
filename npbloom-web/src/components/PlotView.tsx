@@ -1,5 +1,5 @@
 import { useCallback, useContext, useMemo, useRef, useState } from 'react';
-import { applyNodePositionsToPlot, MouseInteractionMode, PositionedPlot } from 'npbloom-core';
+import { applyNodePositionsToPlot, MouseInteractionMode, PositionedPlot, ShapeTool } from 'npbloom-core';
 import usePlotMouseInteractions from './usePlotMouseInteractions';
 import TreeView from './TreeView';
 import ShapeView from './shapes/ShapeView.tsx';
@@ -54,6 +54,15 @@ const PlotView: React.FC = () => {
   } = usePlotMouseInteractions(plot, svgRef);
 
   const isMouseIdle = mouseInteractionMode === MouseInteractionMode.Idle;
+  const isShapeToolActive = state.activeShapeTool !== ShapeTool.None;
+  // When the user is about to draw a shape, the plot content must not capture the mouse,
+  // so that the user can start drawing anywhere (including on top of existing entities).
+  // This only applies to dragging in the context of drawing a shape, not any other context (e.g. moving an entity).
+  const svgEntitiesAcceptMouseEvents = !isShapeToolActive;
+  // HTML overlays (sentences, placeholder) sit on top of the SVG.
+  // They need to let mouse events through during any kind of drag (moving, resizing, shape drawing)
+  // so they don't get in the way.
+  const htmlOverlaysAcceptMouseEvents = isMouseIdle && !isShapeToolActive;
 
   const handleGuidedTourComplete = useCallback(() => setGuidedTourActive(false), []);
 
@@ -89,6 +98,7 @@ const PlotView: React.FC = () => {
           treeId={tree.id}
           tree={tree}
           isAltHeld={isAltHeld}
+          acceptMouseEvents={svgEntitiesAcceptMouseEvents}
           nodeDragOffset={mouseInteractionMode === MouseInteractionMode.DraggingNodes ? dragOffset : undefined}
           treeDragOffset={mouseInteractionMode === MouseInteractionMode.DraggingTrees ? dragOffset : undefined}
           onNodeMouseDown={handleNodeMouseDown}
@@ -99,6 +109,7 @@ const PlotView: React.FC = () => {
           key={`shape-${shape.id}`}
           shape={shape}
           isSelected={selectedShapeIds.includes(shape.id)}
+          acceptMouseEvents={svgEntitiesAcceptMouseEvents}
           panZoomState={state.panZoomState}
           dragOffset={mouseInteractionMode === MouseInteractionMode.DraggingShapes ? dragOffset : undefined}
           resizePreviewShape={resizePreviewShape && shape.id === resizePreviewShape.id ? resizePreviewShape : undefined}
@@ -124,7 +135,7 @@ const PlotView: React.FC = () => {
         key={`sentence-${tree.id}`}
         tree={tree}
         treeId={tree.id}
-        acceptMouseEvents={isMouseIdle}
+        acceptMouseEvents={htmlOverlaysAcceptMouseEvents}
         className={selectionBoxTopLeft && selectionBoxBottomRight ? 'box-selecting' : undefined}
       />)}
     {editedNodeIndicator && <LabelNodeEditor
@@ -137,7 +148,7 @@ const PlotView: React.FC = () => {
       onComplete={handleGuidedTourComplete}
     /> : activePlot.isEmpty && <PlotPlaceholder
       showWelcome={!state.contentState.canUndo && !state.contentState.canRedo}
-      acceptMouseEvents={isMouseIdle}
+      acceptMouseEvents={htmlOverlaysAcceptMouseEvents}
       onTourRequest={() => setGuidedTourActive(true)}
     />}
   </>;

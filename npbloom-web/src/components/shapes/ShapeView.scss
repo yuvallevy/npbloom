@@ -39,3 +39,10 @@
     fill: none;
   }
 }
+
+// Applied when the shape should not capture mouse events, e.g. while the user is drawing a new shape.
+// Child elements set their own `pointer-events` (e.g. the hit area), which would override an inherited value,
+// so the rule must apply to all descendants explicitly.
+.ShapeView--inert, .ShapeView--inert * {
+  pointer-events: none !important;
+}

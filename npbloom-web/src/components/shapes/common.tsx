@@ -15,6 +15,14 @@ const HANDLE_CURSORS: Record<string, string> = {
 };
 
 /**
+ * Returns the class name for the root element of a shape.
+ * When the shape should not accept mouse events (e.g. while the user is drawing a new shape),
+ * an "inert" modifier is added that disables pointer events for the entire shape, including its hit areas.
+ */
+export const shapeViewClassName = (acceptMouseEvents: boolean): string =>
+  'ShapeView' + (acceptMouseEvents ? '' : ' ShapeView--inert');
+
+/**
  * Returns the given coordinate snapped to a physical pixel boundary, if it is necessary to improve rendering quality.
  * Used for crisp rendering at any DPI.
  */
