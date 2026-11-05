@@ -17,9 +17,9 @@
 
 import { useState } from 'react';
 import {
-  AddTree, AddTreeFromLbn, ClientCoordsOffset, computeResizedShape, CoordsInClient, CoordsInPlot, createShapeFromDrag,
-  determineActionOnDragCompletion, determineActionOnSelectBoxCompletion, EnclosureShape, EntitySelectionMode,
-  FreeStandingPlotShape, generateTreeId, LineShape, MouseInteractionMode, NoSelectionInPlot, Pan, PositionedPlot,
+  AddTree, AddTreeFromLbn, asFreeStandingShape, ClientCoordsOffset, computeResizedShape, CoordsInClient, CoordsInPlot,
+  createShapeFromDrag, determineActionOnDragCompletion, determineActionOnSelectBoxCompletion, EntitySelectionMode,
+  FreeStandingPlotShape, generateTreeId, MouseInteractionMode, NoSelectionInPlot, Pan, PositionedPlot,
   RectInClient, SetSelection, ShapeSelectionInPlot, ShapeTool, snapAngleTo45Deg
 } from 'npbloom-core';
 import useUiState from '../useUiState';
@@ -244,10 +244,10 @@ const usePlotMouseInteractions = (
 
   const handleResizeHandleMouseDown = (handleId: string, event: React.MouseEvent<SVGElement>) => {
     if (event.buttons === PRIMARY_MOUSE_BUTTON && selectedShapeIds.length === 1) {
-      const shape = plot.shapes.get(selectedShapeIds[0]);
-      // Only free-standing shapes are resizable (and only they render usable resize handles).
-      // Kotlin interfaces can't be checked with instanceof from JS, so we check the concrete classes.
-      if (shape instanceof EnclosureShape || shape instanceof LineShape) {
+      const selectedShape = plot.shapes.get(selectedShapeIds[0]);
+      // Only free-standing shapes are resizable (and only they render usable resize handles)
+      const shape = selectedShape && asFreeStandingShape(selectedShape);
+      if (shape) {
         setMouseInteractionMode(MouseInteractionMode.ResizingShape);
         setResizeHandleId(handleId);
         setResizingShape(shape);

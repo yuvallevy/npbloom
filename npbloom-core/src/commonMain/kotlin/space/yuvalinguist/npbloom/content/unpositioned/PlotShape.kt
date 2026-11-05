@@ -43,6 +43,14 @@ sealed interface FreeStandingPlotShape : PersistentPlotShape, DrawablePlotShape 
     override fun move(offset: PlotCoordsOffset): FreeStandingPlotShape
 }
 
+/**
+ * Returns the given shape as a `FreeStandingPlotShape`, or null if it isn't one.
+ * Kotlin interfaces don't exist as runtime classes in JS, so checking whether a shape is an instance of
+ * `FreeStandingPlotShape` can only be done at the Kotlin level.
+ */
+@JsExport
+fun asFreeStandingShape(shape: DrawablePlotShape): FreeStandingPlotShape? = shape as? FreeStandingPlotShape
+
 @JsExport
 @Serializable
 @SerialName("LS")
