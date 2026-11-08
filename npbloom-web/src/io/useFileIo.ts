@@ -7,7 +7,13 @@ const useFileIo = () => {
   // so that "Save" and "Save as" work as expected
   const [activeFileName, setActiveFileName] = useState<string>();
 
-  const { browserFileIoModalComponent, openFileLoadModal, openFileSaveModal, saveOrSaveAs } = useBrowserFileIo({
+  const {
+    browserFileIoModalComponent,
+    openFileLoadModal,
+    openFileSaveModal,
+    saveOrSaveAs,
+    hasUnsavedChanges,
+  } = useBrowserFileIo({
     activeFileName,
     setActiveFileName,
   });
@@ -27,6 +33,7 @@ const useFileIo = () => {
     openFileLoadModal,
     openFileSaveModal,
     saveOrSaveAs,
+    hasUnsavedChanges,
     openSystemFileLoadModal,
     openSystemFileSaveModal,
   };

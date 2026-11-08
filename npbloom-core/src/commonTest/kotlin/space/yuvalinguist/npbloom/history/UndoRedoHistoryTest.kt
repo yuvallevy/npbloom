@@ -3,6 +3,9 @@ package space.yuvalinguist.npbloom.history
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotSame
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class UndoRedoHistoryTest {
@@ -79,4 +82,31 @@ class UndoRedoHistoryTest {
     @Test
     fun testCanRedoFalse() =
         assertFalse(undoRedoHistoryAfterTwoActions.canRedo)
+
+    @Test
+    fun testLastActionInitiallyNull() =
+        assertNull(initialUndoRedoHistory.lastAction)
+
+    @Test
+    fun testLastActionAfterApply() =
+        assertSame(action2, initialUndoRedoHistory.applyAction(action1).applyAction(action2).lastAction)
+
+    @Test
+    fun testLastActionAfterUndo() =
+        assertSame(action1, initialUndoRedoHistory.applyAction(action1).applyAction(action2).undo().lastAction)
+
+    @Test
+    fun testLastActionAfterUndoAll() =
+        assertNull(initialUndoRedoHistory.applyAction(action1).undo().lastAction)
+
+    @Test
+    fun testLastActionAfterUndoThenRedo() =
+        assertSame(action2, initialUndoRedoHistory.applyAction(action1).applyAction(action2).undo().redo().lastAction)
+
+    @Test
+    fun testLastActionAfterUndoThenNewEqualAction() {
+        // A new action, even one structurally equal to the undone one, must be a different marker
+        val history = initialUndoRedoHistory.applyAction(action2).undo().applyAction(IncrementNumber(difference = 11))
+        assertNotSame(action2, history.lastAction)
+    }
 }

@@ -17,6 +17,13 @@ data class UndoRedoHistory<S, A : UndoableActionBase>(
 
     val canRedo get() = redoStack.isNotEmpty()
 
+    /**
+     * The most recently applied action (the top of the undo stack), or null if the undo stack is empty.
+     * Since every applied action is a distinct object, this can be compared by reference
+     * to easily tell whether the state has changed since some earlier point (e.g. the last save).
+     */
+    val lastAction: A? get() = undoStack.firstOrNull()
+
     fun applyAction(action: A): UndoRedoHistory<S, A> =
         copy(
             current = applyActionFunc(current, action),

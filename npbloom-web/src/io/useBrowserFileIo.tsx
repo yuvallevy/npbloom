@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useDisclosure } from '@mantine/hooks';
 import { modals } from '@mantine/modals';
 import useUiState from '../useUiState';
-import { LoadContentState, createFileContents } from 'npbloom-core';
+import { ContentChange, LoadContentState, createFileContents } from 'npbloom-core';
 import {
   deleteFile,
   FileWithMetadata,
@@ -13,6 +13,7 @@ import {
   saveFileContents
 } from './browserFileIoImpl';
 import BrowserFileIoModal from './BrowserFileIoModal';
+import useUnsavedChangesWarning from './useUnsavedChangesWarning';
 
 const useBrowserFileIo = ({
   activeFileName,
@@ -26,6 +27,12 @@ const useBrowserFileIo = ({
   const [browserFileIoModalOpened, { open: openFileIoModal, close: closeFileIoModal }] = useDisclosure(false);
   const [fileList, setFileList] = useState<FileWithMetadata[]>([]);
   const [interactionMode, setInteractionMode] = useState<'save' | 'load'>('load');
+
+  // The top of the undo stack at the time of the last save or load, used as a marker for the saved version.
+  // Compared by reference to determine whether the content has changed since then.
+  const [savedMarker, setSavedMarker] = useState<ContentChange | null>(null);
+  const hasUnsavedChanges = (state.contentState.lastAction ?? null) !== savedMarker;
+  useUnsavedChangesWarning(hasUnsavedChanges);
 
   const refreshFileList = async () => {
     if (!db.current) {
@@ -56,8 +63,10 @@ const useBrowserFileIo = ({
     assertDbConnected(async db => {
       try {
         const fileContents = createFileContents(state.contentState.current, state.plotPanZoomStates);
+        const marker = state.contentState.lastAction ?? null; // Captured alongside the contents being saved
         await saveFileContents(db, fileContents, fileName);
         setActiveFileName(fileName);
+        setSavedMarker(marker);
         closeFileIoModal();
       } catch (e: any) {
         modals.open({
@@ -74,6 +83,7 @@ const useBrowserFileIo = ({
         const fileContents = await loadFileContents(db, fileName);
         setActiveFileName(fileName);
         dispatch(new LoadContentState(fileContents));
+        setSavedMarker(null); // Loading resets the undo history, so the loaded content has an empty undo stack
         closeFileIoModal();
       } catch (e: any) {
         modals.open({
@@ -115,6 +125,7 @@ const useBrowserFileIo = ({
     openFileSaveModal,
     openFileLoadModal,
     saveOrSaveAs,
+    hasUnsavedChanges,
   };
 };
 

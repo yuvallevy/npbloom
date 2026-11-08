@@ -580,7 +580,9 @@ Serialized data in CBOR is passed between the frontend and `npbloom-core` as an 
 * `openFileSaveModal()`: Opens the file save modal, allowing the user to choose a name to save under. This constructs a `FileContents` from the current content state and pan/zoom states (via `createFileContents`), then calls `saveFileContents` internally. Equivalent to the "Save As" menu action.
 * `saveOrSaveAs()`: If the current content state has already been saved to a file, this saves it to that file again (overwriting the previous content). If it has not been saved before, this opens the file save modal as described above. Equivalent to the "Save" menu action.
 
-`useBrowserFileIo` also exposes `activeFileName`, which is the name of the file that the current content state is saved under, or `null` if it has not been saved before. This is used to show the current file name in the UI. It is _not_ used to determine whether "Save" should trigger a save or a save-as operation; that is determined within `useBrowserFileIo` itself and not exposed to the rest of the frontend.
+`useBrowserFileIo` exposes `activeFileName`, which is the name of the file that the current content state is saved under, or `null` if it has not been saved before. This is used to show the current file name in the UI. It is _not_ used to determine whether "Save" should trigger a save or a save-as operation; that is determined within `useBrowserFileIo` itself and not exposed to the rest of the frontend.
+
+`useBrowserFileIo` also exposes `hasUnsavedChanges`, which is true when the content has changed since it was last saved or loaded through the browser file I/O system. If the tab is closed or reloaded while it is true, the hook asks the browser to show a confirmation dialog first. The check works by recording the top of the undo stack (`UndoRedoHistory.lastAction`) as a "saved marker" on every successful save, and resetting the marker to `null` on load (since `LoadContentState` resets the undo history).
 
 Finally, `useBrowserFileIo` exposes `browserFileIoModalComponent`, which is the component for the file I/O modal itself. This is only rendered once as part of `MainMenu`.
 
@@ -603,7 +605,7 @@ These functions are exposed to the rest of the frontend via the `useSystemFileIo
 * `openSystemFileLoadModal()`: Opens the system file picker for opening files, allowing the user to choose a file to load. This calls `openFileNative` internally, then deserializes the chosen file via `fileContentsFromByteArray` and dispatches `LoadContentState` with the resulting `FileContents` (which includes both content and per-plot pan/zoom states).
 * `openSystemFileSaveModal()`: Opens the system file picker for saving files, allowing the user to choose a location to save the current state. This constructs a `FileContents` via `createFileContents` from the current content state and pan/zoom states, serializes it via `fileContentsToByteArray`, then calls `saveFileNative`.
 
-Since the native file I/O system is still experimental and not guaranteed to work in all environments, it is exposed through menu actions as "Import" and "Export", hinting that it is not the primary means of saving and loading files in NPBloom. Unlike the browser file I/O system, the "active file" is not exposed, only existing so that the same name is used when exporting multiple times in a row.
+Since the native file I/O system is still experimental and not guaranteed to work in all environments, it is exposed through menu actions as "Import" and "Export", hinting that it is not the primary means of saving and loading files in NPBloom. Unlike the browser file I/O system, the "active file" is not exposed, only existing so that the same name is used when exporting multiple times in a row. Exporting does not count as saving for the purposes of the unsaved-changes warning, which only tracks the browser file I/O system.
 
 ##### Biohazard warning regarding `useSystemFileIo`
 
