@@ -1,6 +1,6 @@
 import {
   AddNodeBySelection, DeleteSelectedEntities, EntitySelectionAction, generateNodeId, NodeSelectionInPlot,
-  NoSelectionInPlot, Redo, ResetSelectedNodePositions, SetSelectionAction, SetShapeTool, ShapeTool,
+  Redo, ResetSelectedNodePositions, SetSelectionAction, SetShapeTool, ShapeSelectionInPlot, ShapeTool,
   SliceSelectionInPlot, StartEditing, ToggleSliceStrikethrough, ToggleTriangle, TreeSelectionInPlot, Undo,
   UnpositionedTerminalNode,
 } from 'npbloom-core';
@@ -39,14 +39,15 @@ const Toolbox: React.FC = () => {
 
   const { textOutputModalComponent, openTextOutputModal } = useTextOutputModal();
 
-  const noNodesOrSliceSelected = state.selection === NoSelectionInPlot.getInstance() ||
-    state.selection instanceof TreeSelectionInPlot;
+  const noNodesOrSliceSelected = !(state.selection instanceof NodeSelectionInPlot ||
+    state.selection instanceof SliceSelectionInPlot);
   const sentenceIsEmpty = state.selection instanceof SliceSelectionInPlot &&
     state.contentState.current.plots[state.activePlotIndex]
       .tree((state.selection as SliceSelectionInPlot).treeId).sentence === '';
   const noNodesSelected = !(state.selection instanceof NodeSelectionInPlot);
   const noTreesSelected = !(state.selection instanceof TreeSelectionInPlot);
   const noSliceSelected = !(state.selection instanceof SliceSelectionInPlot);
+  const noShapesSelected = !(state.selection instanceof ShapeSelectionInPlot);
   const oneTreeSelected = state.selection instanceof TreeSelectionInPlot &&
     state.selection.treeIdsAsArray.length === 1;
   const selectedNodeIndicators = state.selection instanceof NodeSelectionInPlot
@@ -143,9 +144,10 @@ const Toolbox: React.FC = () => {
         description: 'Redo the last undone action.' },
       { title: 'Add', icon: IconPlus, action: addNode, disabled: noNodesOrSliceSelected || sentenceIsEmpty,
         hotkey: 'Up', description: 'Add a new parent node for the selected text or nodes.' },
-      { title: 'Delete', icon: IconTrash, action: deleteEntities, disabled: noNodesSelected && noTreesSelected,
+      { title: 'Delete', icon: IconTrash, action: deleteEntities, disabled: noNodesSelected && noTreesSelected && noShapesSelected,
         hotkey: 'Backspace', description: 'Delete the selected ' +
-          (state.selection instanceof TreeSelectionInPlot ? 'trees' : 'nodes') + '.' },
+          (state.selection instanceof TreeSelectionInPlot ? 'trees'
+            : state.selection instanceof ShapeSelectionInPlot ? 'shapes' : 'nodes') + '.' },
       { title: 'Edit', icon: IconPencil, action: startEditing, disabled: noNodesSelected, hotkey: 'Enter',
         toggleState: state.editedNodeIndicator ? 'on' : 'off', description: 'Edit the selected node.' },
       { title: 'Triangle', icon: IconTriangle, ...getTriangleButtonState(),
