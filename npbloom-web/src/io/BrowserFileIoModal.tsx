@@ -22,7 +22,7 @@ const compareFileNames = (file1: FileWithMetadata, file2: FileWithMetadata) =>
   Intl.Collator().compare(file1.name, file2.name);
 
 const prettyDate = (date: Date) =>
-  (date.getDay() === new Date().getDay()) ? `Today, ${date.toLocaleTimeString()}` : date.toLocaleString();
+  (date.toDateString() === new Date().toDateString()) ? `Today, ${date.toLocaleTimeString()}` : date.toLocaleString();
 
 const BrowserFileIoModal: React.FC<BrowserFileIoModalProps> = ({
   opened,
