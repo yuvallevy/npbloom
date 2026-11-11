@@ -1,4 +1,4 @@
-import { Alert, Anchor } from '@mantine/core';
+import { Alert, Anchor, Text } from '@mantine/core';
 import './PlotPlaceholder.scss';
 import LogoDim from './npbloom-logo-dim.svg';
 
@@ -13,18 +13,19 @@ const PlotPlaceholder: React.FC<PlotPlaceholderProps> = ({ showWelcome, acceptMo
     {showWelcome ? <Alert
       className="PlotPlaceholder--alert"
       color="gray"
+      bg="gray.0"
       title="Welcome to NPBloom!"
       style={{ pointerEvents: acceptMouseEvents ? 'auto' : 'none' }}
     >
-      <div className="PlotPlaceholder--desktop-alert-content">
+      <Text size="sm" className="PlotPlaceholder--desktop-alert-content">
         To start, click anywhere and type a sentence,
         or <Anchor onClick={onTourRequest}>take the guided tour</Anchor>.
-      </div>
-      <div className="PlotPlaceholder--mobile-alert-content">
+      </Text>
+      <Text size="sm" className="PlotPlaceholder--mobile-alert-content">
         NPBloom works best on desktop.<br />
         Come back on a larger screen to start,
         or <Anchor onClick={onTourRequest}>take the guided tour</Anchor>.
-      </div>
+      </Text>
     </Alert> : <img src={LogoDim} height={120} alt="NPBloom logo" />}
   </div>;
 

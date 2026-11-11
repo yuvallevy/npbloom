@@ -10,6 +10,7 @@ import {
 } from 'npbloom-core';
 import PlotView from './components/PlotView';
 import useHotkeys from '@reecelucas/react-use-hotkeys';
+import { MAIN_MENU_HEIGHT, PLOT_SELECTOR_HEIGHT, TOOLBOX_WIDTH } from './uiDimensions';
 import MainMenu from './components/MainMenu';
 import Toolbox from './components/Toolbox';
 import PlotSelector from './components/PlotSelector';
@@ -87,15 +88,24 @@ const UiRoot = () => {
     }
   });
 
-  return <MantineProvider withGlobalStyles withNormalizeCSS theme={theme}>
+  return <MantineProvider theme={theme}>
     <ModalsProvider>
       <AppShell
-        header={<MainMenu />}
-        navbar={<Toolbox />}
-        footer={<PlotSelector />}
+        header={{ height: MAIN_MENU_HEIGHT }}
+        navbar={{ width: TOOLBOX_WIDTH, breakpoint: 'none' }}
+        footer={{ height: PLOT_SELECTOR_HEIGHT }}
         padding={0}
       >
-        <PlotView />
+        <AppShell.Header>
+          <MainMenu />
+        </AppShell.Header>
+        <Toolbox />
+        <AppShell.Main className="UiRoot--main">
+          <PlotView />
+        </AppShell.Main>
+        <AppShell.Footer p={0} withBorder={false}>
+          <PlotSelector />
+        </AppShell.Footer>
       </AppShell>
     </ModalsProvider>
   </MantineProvider>;

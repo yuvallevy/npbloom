@@ -15,3 +15,15 @@
 .Toolbox--tool-title {
   font-weight: bold;
 }
+
+// ActionIcon is inline-flex, so without this the wrapper takes up more vertical space than its child
+.Toolbox--button-wrapper {
+  display: flex;
+}
+
+.Toolbox--button {
+  &:disabled, &[data-disabled] {
+    background-color: var(--mantine-color-white);
+    border-color: var(--mantine-color-white);
+  }
+}

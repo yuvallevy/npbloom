@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import '@mantine/core/styles.css';  // Must come before any of our own stylesheets so that they can override it
 import './index.scss';
 import App from './App.tsx';
 import { ErrorBoundary } from 'react-error-boundary';

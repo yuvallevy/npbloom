@@ -92,17 +92,17 @@ const BrowserFileIoModal: React.FC<BrowserFileIoModalProps> = ({
   >
     <ScrollArea h={400}>
       <Table highlightOnHover={interactionMode === 'load'}>
-        <thead>
-        <tr>
-          <th>Name</th>
-          <th style={{ width: '12ch' }}>Size</th>
-          <th style={{ width: '24ch' }}>Modified</th>
-          <th style={{ width: '10ch' }}></th>
-        </tr>
-        </thead>
-        <tbody>
-          {sortedFileList.map((file) => <tr key={file.name} className="BrowserFileIoModal--file-row">
-            <td
+        <Table.Thead>
+        <Table.Tr>
+          <Table.Th>Name</Table.Th>
+          <Table.Th style={{ width: '12ch' }}>Size</Table.Th>
+          <Table.Th style={{ width: '24ch' }}>Modified</Table.Th>
+          <Table.Th style={{ width: '10ch' }}></Table.Th>
+        </Table.Tr>
+        </Table.Thead>
+        <Table.Tbody>
+          {sortedFileList.map((file) => <Table.Tr key={file.name} className="BrowserFileIoModal--file-row">
+            <Table.Td
               style={{ cursor: interactionMode === 'load' ? 'pointer' : 'unset' }}
               onClick={interactionMode === 'load'
                 ? ((event) => event.currentTarget === event.target ? onLoad(file.name) : undefined)
@@ -115,31 +115,31 @@ const BrowserFileIoModal: React.FC<BrowserFileIoModalProps> = ({
                       <TextInput ref={newFileNameInputRef} classNames={{ root: "BrowserFileIoModal--new-file-name-input" }} p="xs" value={newFileName} onInput={setNewFileName} />
                     </Popover.Target>
                     <Popover.Dropdown>
-                      <Text color="red">{renamingStatus?.message}</Text>
+                      <Text c="red">{renamingStatus?.message}</Text>
                     </Popover.Dropdown>
                   </Popover>
                 </form>
                 : file.name}
-            </td>
-            <td>{prettyBytes(file.size)}</td>
-            <td>{prettyDate(file.modifiedTime)}</td>
-            <td>
+            </Table.Td>
+            <Table.Td>{prettyBytes(file.size)}</Table.Td>
+            <Table.Td>{prettyDate(file.modifiedTime)}</Table.Td>
+            <Table.Td>
               {renamingFile
-                ? <Group spacing="xs" position="right" className="BrowserFileIoModal--file-actions">
+                ? <Group gap="xs" justify="flex-end" className="BrowserFileIoModal--file-actions">
                   <ActionIcon variant="gradient" onClick={() => handleRename(file.name, newFileName)}>
                     <IconCheck size={18} />
                   </ActionIcon>
-                  <ActionIcon onClick={closeNewFileNamePrompt}>
+                  <ActionIcon variant="subtle" onClick={closeNewFileNamePrompt}>
                     <IconX size={18} />
                   </ActionIcon>
                 </Group>
-                : <Group spacing="xs" position="right" className="BrowserFileIoModal--file-actions">
-                  <ActionIcon onClick={() => openNewFileNamePrompt(file.name)}>
+                : <Group gap="xs" justify="flex-end" className="BrowserFileIoModal--file-actions">
+                  <ActionIcon variant="subtle" color="gray" onClick={() => openNewFileNamePrompt(file.name)}>
                     <IconEdit size={18} />
                   </ActionIcon>
                   <Popover position="left" withArrow>
                     <Popover.Target>
-                      <ActionIcon color="red">
+                      <ActionIcon variant="subtle" color="red">
                         <IconTrash size={18} />
                       </ActionIcon>
                     </Popover.Target>
@@ -148,9 +148,9 @@ const BrowserFileIoModal: React.FC<BrowserFileIoModalProps> = ({
                     </Popover.Dropdown>
                   </Popover>
                 </Group>}
-            </td>
-          </tr>)}
-        </tbody>
+            </Table.Td>
+          </Table.Tr>)}
+        </Table.Tbody>
       </Table>
     </ScrollArea>
     {interactionMode === 'save' && <>

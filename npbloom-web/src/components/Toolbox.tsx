@@ -4,7 +4,7 @@ import {
   SliceSelectionInPlot, StartEditing, ToggleSliceStrikethrough, ToggleTriangle, TreeSelectionInPlot, Undo,
   UnpositionedTerminalNode,
 } from 'npbloom-core';
-import { ActionIcon, Paper, Navbar, SimpleGrid, useMantineTheme } from '@mantine/core';
+import { ActionIcon, AppShell, Paper, SimpleGrid, useMantineTheme } from '@mantine/core';
 import {
   IconArrowBackUp, IconArrowForwardUp, IconArrowUpRight, IconBracketsContain, IconCircle, IconCopy, IconLine,
   IconPencil, IconPhotoShare, IconPlus, IconRectangle, IconStrikethrough, IconTrash, IconTriangle, TablerIconsProps,
@@ -18,7 +18,6 @@ import useUiState from '../useUiState';
 import useTextOutputModal from '../io/useTextOutputModal';
 import useHotkeys from '@reecelucas/react-use-hotkeys';
 import { copyTreeToClipboard } from '../io/clipboardIo';
-import { TOOLBOX_WIDTH } from '../uiDimensions';
 import useTreeExport from '../useTreeExport';
 
 type ToolboxItem = {
@@ -194,14 +193,15 @@ const Toolbox: React.FC = () => {
     ]],
   ];
 
-  return <><Navbar width={{ base: TOOLBOX_WIDTH }} p={4} sx={{ zIndex: 90 }}>
+  return <><AppShell.Navbar p={4} style={{ zIndex: 90 }}>
     {sections.map(([sectionName, items], sectionIndex) => (
-      <Navbar.Section key={sectionName} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'start' }}>
+      <AppShell.Section key={sectionName} style={{ display: 'flex', flexDirection: 'column', alignItems: 'start' }}>
         {sectionIndex > 0 && <div className="Toolbox--section-divider" />}
         <SimpleGrid cols={2} spacing={0} verticalSpacing={0}>
           {items.map(item =>
             <div
               key={item.title}
+              className="Toolbox--button-wrapper"
               onMouseEnter={() => setHoveredItem(item)}
               onMouseLeave={() => setHoveredItem(undefined)}
             >
@@ -210,7 +210,7 @@ const Toolbox: React.FC = () => {
                 variant={item.toggleState === 'on' ? 'gradient' : item.toggleState === 'indeterminate' ? 'light' : 'subtle'}
                 disabled={item.disabled}
                 color={theme.primaryColor}
-                sx={{ ':disabled': { backgroundColor: theme.white, borderColor: theme.white } }}
+                className="Toolbox--button"
                 onFocus={e => { lastFocusEvent.current = e; }}
                 onClick={clickEvent => item.action(clickEvent, lastFocusEvent.current)}
               >
@@ -221,10 +221,10 @@ const Toolbox: React.FC = () => {
             </div>
           )}
         </SimpleGrid>
-      </Navbar.Section>
+      </AppShell.Section>
     ))}
     {textOutputModalComponent}
-  </Navbar>
+  </AppShell.Navbar>
   {hoveredItem && <Paper
     shadow="sm"
     p="sm"

@@ -20,6 +20,59 @@ code {
   height: 100vh;
 }
 
+// Mantine component overrides
+
+.mantine-Button-root {
+  // short squat buttons, more horizontal padding than vertical padding
+  --button-height-xs: 1.5rem;
+  --button-height-sm: 1.75rem;
+  --button-height-md: 2.125rem;
+  --button-height-lg: 2.5rem;
+  --button-height-xl: 3rem;
+
+  --button-padding-x-xs: 0.625rem;
+  --button-padding-x-sm: 0.75rem;
+  --button-padding-x-md: 0.875rem;
+  --button-padding-x-lg: 1rem;
+  --button-padding-x-xl: 1.125rem;
+
+  // buttons are bold by default; make them normal weight
+  font-weight: normal;
+
+  // subtle border and shadow
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: var(--mantine-shadow-xs);
+
+  // variants where the background is normally white should be transparent instead
+  &[data-variant='light'], &[data-variant='subtle'], &[data-variant='white'] {
+    border-color: transparent;
+    box-shadow: none;
+  }
+}
+
+.mantine-Input-wrapper {
+  // match low vertical padding of buttons
+  --input-height-xs: 1.5rem;
+  --input-height-sm: 1.75rem;
+  --input-height-md: 2.125rem;
+  --input-height-lg: 2.5rem;
+  --input-height-xl: 3rem;
+}
+
+.mantine-Modal-header {
+  // generous padding for modal header
+  padding: 1.125rem 0.75rem 1.125rem 1.125rem;
+}
+
+.mantine-Modal-body {
+  // match header padding for modal body on the sides and bottom
+  padding: 1.125rem;
+  // remove the top padding if there are siblings so padding is not doubled
+  &:not(:only-child) {
+    padding-top: 0;
+  }
+}
+
 .Modal-product-info {
   .mantine-Modal-header {
     background-color: #1a1a1a;

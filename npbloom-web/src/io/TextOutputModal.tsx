@@ -54,7 +54,7 @@ const TextOutputModal: React.FC<TextOutputModalProps> = ({
         className="TextOutputModal--textarea"
         mb={theme.spacing.md}
       />
-      <Group position="apart">
+      <Group justify="space-between">
         <Group>
           <Button variant="default" onClick={handleCopy}>Copy to clipboard</Button>
           <Menu shadow="md" position="bottom-start">

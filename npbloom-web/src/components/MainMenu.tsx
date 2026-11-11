@@ -1,5 +1,5 @@
 import { Fragment } from 'react';
-import { Button, Flex, Header, Menu, Space, Text } from '@mantine/core';
+import { Button, Flex, Menu, Space, Text } from '@mantine/core';
 import { useOs } from '@mantine/hooks';
 import {
   IconDeviceFloppy,
@@ -9,7 +9,6 @@ import {
   IconPhotoShare,
   TablerIconsProps,
 } from '@tabler/icons-react';
-import { MAIN_MENU_HEIGHT } from '../uiDimensions.ts';
 import useHotkeys from '@reecelucas/react-use-hotkeys';
 import { FoldSelectedNodes, MarkCCommandedNodes, MarkCCommandingNodes, NodeSelectionInPlot,
   RemoveRelationMarkingsInSelectedTree, RemoveAllRelationMarkings, TreeSelectionInPlot, UnfoldSelectedNodes,
@@ -124,46 +123,44 @@ const MainMenu: React.FC = () => {
   ]
 
   return <>
-    <Header height={MAIN_MENU_HEIGHT}>
-      <Flex align="stretch" className="MainMenu">
-        {mainMenuElements.map(([sectionName, sectionGroups]) => (
-          <Menu
-            key={sectionName}
-            shadow="md"
-            offset={0}
-            position="top-start"
-            transitionProps={{ transition: 'scale-y' }}
-          >
-            <Menu.Target>
-              <Button variant="subtle" size="sm">
-                {sectionName}
-              </Button>
-            </Menu.Target>
-            <Menu.Dropdown sx={{ minWidth: '18ch' }}>
-              {sectionGroups.map((groupItems, groupIndex) => <Fragment key={groupIndex}>
-                {groupItems.map((item, itemIndex) =>
-                  item.hidden ? null : <Menu.Item
-                    key={itemIndex}
-                    icon={item.icon ? <item.icon size={14} /> : null}
-                    rightSection={item.hotkey && <Text color="dimmed">{substituteOsAwareHotkey(item.hotkey, os)}</Text>}
-                    style={{ whiteSpace: 'pre-line' }}
-                    disabled={item.disabled}
-                    onClick={item.action}
-                  >
-                    {item.label}
-                  </Menu.Item>)}
-                {groupIndex < sectionGroups.length - 1
-                  && sectionGroups[groupIndex + 1].some(({ hidden }) => !hidden)
-                  && <Menu.Divider />}
-              </Fragment>)}
-            </Menu.Dropdown>
-          </Menu>
-        ))}
-        <Space style={{ flexGrow: 1 }} />
-        <Settings />
-        <AboutButton />
-      </Flex>
-    </Header>
+    <Flex align="stretch" className="MainMenu">
+      {mainMenuElements.map(([sectionName, sectionGroups]) => (
+        <Menu
+          key={sectionName}
+          shadow="md"
+          offset={0}
+          position="top-start"
+          transitionProps={{ transition: 'scale-y' }}
+        >
+          <Menu.Target>
+            <Button variant="subtle" size="sm">
+              {sectionName}
+            </Button>
+          </Menu.Target>
+          <Menu.Dropdown style={{ minWidth: '18ch' }}>
+            {sectionGroups.map((groupItems, groupIndex) => <Fragment key={groupIndex}>
+              {groupItems.map((item, itemIndex) =>
+                item.hidden ? null : <Menu.Item
+                  key={itemIndex}
+                  leftSection={item.icon ? <item.icon size={14} /> : null}
+                  rightSection={item.hotkey && <Text size="sm" c="dimmed">{substituteOsAwareHotkey(item.hotkey, os)}</Text>}
+                  style={{ whiteSpace: 'pre-line' }}
+                  disabled={item.disabled}
+                  onClick={item.action}
+                >
+                  {item.label}
+                </Menu.Item>)}
+              {groupIndex < sectionGroups.length - 1
+                && sectionGroups[groupIndex + 1].some(({ hidden }) => !hidden)
+                && <Menu.Divider />}
+            </Fragment>)}
+          </Menu.Dropdown>
+        </Menu>
+      ))}
+      <Space style={{ flexGrow: 1 }} />
+      <Settings />
+      <AboutButton />
+    </Flex>
     {browserFileIoModalComponent}
   </>;
 };

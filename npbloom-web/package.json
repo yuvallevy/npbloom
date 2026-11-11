@@ -11,10 +11,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@emotion/react": "^11.10.8",
-    "@mantine/core": "^6.0.10",
-    "@mantine/hooks": "^6.0.10",
-    "@mantine/modals": "^6.0.22",
+    "@mantine/core": "^7.17.8",
+    "@mantine/hooks": "^7.17.8",
+    "@mantine/modals": "^7.17.8",
     "@reecelucas/react-use-hotkeys": "^2.0.0",
     "@tabler/icons-react": "^2.47.0",
     "pretty-bytes": "^6.1.1",
@@ -25,8 +24,8 @@
   },
   "devDependencies": {
     "@testing-library/react": "^14.0.0",
-    "@types/react": "^18.0.28",
-    "@types/react-dom": "^18.0.11",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^5.57.1",
     "@typescript-eslint/parser": "^5.57.1",
     "@vitejs/plugin-react-swc": "^3.0.0",

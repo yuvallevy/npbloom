@@ -42,7 +42,7 @@ const Settings: React.FC = () => {
           checked={settingsState.prettyNodeLabels}
           onChange={(event) => settingsDispatch(new SetPrettyNodeLabels(event.currentTarget.checked))}
         />
-        <Group position="right">
+        <Group justify="flex-end">
           <Button variant="filled" onClick={close}>Done</Button>
         </Group>
       </Stack>

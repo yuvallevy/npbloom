@@ -1,6 +1,11 @@
-import { MantineThemeOverride, rem } from '@mantine/core';
+import { Anchor, createTheme, rem } from '@mantine/core';
 
-const globalTheme: MantineThemeOverride = {
+// See also index.scss for style overrides for components (Button, Modal, TextInput)
+export default createTheme({
+  components: {
+    // links inside running text should match its size rather than default to `md`
+    Anchor: Anchor.extend({ defaultProps: { inherit: true } }),
+  },
   defaultGradient: { deg: 60, from: 'green', to: 'teal' },
   primaryColor: 'green',
   primaryShade: 9,
@@ -34,72 +39,4 @@ const globalTheme: MantineThemeOverride = {
   },
   fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Helvetica",' +
     '"Cantarell","Fira Sans","Droid Sans","Helvetica Neue",sans-serif',
-};
-
-const sizes = {
-  xs: rem(24),
-  sm: rem(28),
-  md: rem(34),
-  lg: rem(40),
-  xl: rem(48),
-};
-
-const componentThemes: MantineThemeOverride['components'] = {
-  Anchor: {
-    styles: (theme) => ({
-      root: {
-        // Force shade 9 for links, since Mantine's default is shade 7
-        color: theme.colors[theme.primaryColor][9],
-        textDecoration: 'none',
-        '&:hover': {
-          textDecoration: 'underline',
-        },
-      },
-    }),
-  },
-  TextInput: {
-    sizes: {
-      xs: () => ({ input: { height: sizes.xs, minHeight: sizes.xs } }),
-      sm: () => ({ input: { height: sizes.sm, minHeight: sizes.sm } }),
-      md: () => ({ input: { height: sizes.md, minHeight: sizes.md } }),
-      lg: () => ({ input: { height: sizes.lg, minHeight: sizes.lg } }),
-      xl: () => ({ input: { height: sizes.xl, minHeight: sizes.xl } }),
-    },
-  },
-  Button: {
-    styles: (theme, _, { variant }) => ({
-      root: {
-        fontWeight: 'normal',
-        borderColor:
-          variant === 'light' || variant === 'subtle' || variant === 'white' ? 'transparent' : 'rgba(0, 0, 0, 0.1)',
-        boxShadow:
-          variant === 'light' || variant === 'subtle' || variant === 'white' ? 'none' : theme.shadows.xs,
-      },
-    }),
-    sizes: {
-      xs: () => ({ root: { height: sizes.xs, paddingLeft: rem(10), paddingRight: rem(10) } }),
-      sm: () => ({ root: { height: sizes.sm, paddingLeft: rem(12), paddingRight: rem(12) } }),
-      md: () => ({ root: { height: sizes.md, paddingLeft: rem(14), paddingRight: rem(14) } }),
-      lg: () => ({ root: { height: sizes.lg, paddingLeft: rem(16), paddingRight: rem(16) } }),
-      xl: () => ({ root: { height: sizes.xl, paddingLeft: rem(18), paddingRight: rem(18) } }),
-      'compact-xs': () => ({ root: { height: rem(22), paddingLeft: rem(7), paddingRight: rem(7) } }),
-      'compact-sm': () => ({ root: { height: rem(26), paddingLeft: rem(8), paddingRight: rem(8) } }),
-      'compact-md': () => ({ root: { height: rem(30), paddingLeft: rem(10), paddingRight: rem(10) } }),
-      'compact-lg': () => ({ root: { height: rem(34), paddingLeft: rem(12), paddingRight: rem(12) } }),
-      'compact-xl': () => ({ root: { height: rem(40), paddingLeft: rem(14), paddingRight: rem(14) } }),
-    },
-  },
-  Modal: {
-    styles: {
-      header: {
-        padding: rem(18),
-        paddingRight: rem(12),
-      },
-      body: {
-        padding: rem(18),
-      },
-    },
-  },
-};
-
-export default { ...globalTheme, components: componentThemes };
+});
