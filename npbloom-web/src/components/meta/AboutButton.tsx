@@ -28,7 +28,7 @@ const AboutButton = () => {
     <Modal
       opened={aboutBoxOpened && !newVersionModalOpened}
       onClose={closeAboutBox}
-      title={<Group justify="space-between" gap="none">
+      title={<Group position="apart" spacing="none">
         <img src={Logo} height={80} alt="NPBloom logo" />
         <Text size="lg">Awaken your colorless green ideas.</Text>
       </Group>}
@@ -50,11 +50,11 @@ const AboutButton = () => {
           rel="noopener noreferrer"
         >GitHub repository</Anchor>.
       </p>
-      <Group justify="space-between" align="end">
+      <Group position="apart" align="end">
         <Stack>
           <Text size="sm">
             Version {currentVersion}.{' '}
-            <Anchor component="button" type="button" onClick={openNewVersionModal}>See what's new</Anchor><br />
+            <Button variant="white" style={{ fontSize: 'inherit' }} onClick={openNewVersionModal}>See what's new</Button><br />
             {import.meta.env.VITE_BUILD_TIMESTAMP && <> Last updated {import.meta.env.VITE_BUILD_TIMESTAMP}.</>}
           </Text>
           <Text size="sm">

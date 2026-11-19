@@ -47,22 +47,22 @@ const NewVersionModal = ({
     withCloseButton={false}
     onClose={onClose}
     className="Modal-product-info"
-    title={<Group justify="space-between">
+    title={<Group position="apart">
       <Text>What's new in NPBloom</Text>
-      <Badge variant="gradient" size="xl" style={{ textTransform: 'none' }}>
+      <Badge variant="gradient" size="xl" sx={{ textTransform: 'none' }}>
         v{currentVersion}
       </Badge>
     </Group>}
   >
-    <Stack className="NewVersionModal--changes" gap="lg">
+    <Stack className="NewVersionModal--changes" spacing="lg">
       {changesFromPreviousVersion.map(({ icon: Icon, title, badge, description }, index) => (
         <Container key={index} className="NewVersionModal--change">
           <ThemeIcon size="xl" radius="md" variant="light" color={colorByChangeType[badge || '']}>
             <Icon />
           </ThemeIcon>
-          <Stack gap="xs">
+          <Stack spacing="xs">
             <Group>
-              <Text fw={700}>{title}</Text>
+              <Text weight="bold">{title}</Text>
               {badge && <Badge variant="light" color={colorByChangeType[badge]}>{badge}</Badge>}
             </Group>
             <div className="NewVersionModal--change-description">{description}</div>
@@ -71,7 +71,7 @@ const NewVersionModal = ({
       ))}
     </Stack>
     <Space h="xl" />
-    <Group justify="space-between">
+    <Group position="apart">
       <Text size="sm">
         Released {releaseDate} &nbsp;&middot;&nbsp; <Anchor href="https://github.com/yuvallevy/syntax-forest-builder/blob/main/HISTORY.md" target="_blank" rel="noopener">Full release notes</Anchor>
       </Text>

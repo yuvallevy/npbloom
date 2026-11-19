@@ -32,7 +32,7 @@ const GuidedTour: React.FC<GuidedTourProps> = ({ onComplete }) => {
       ref={alertRef}
       withCloseButton={false}
       radius="md"
-      style={{
+      sx={{
         animationDuration: '0.5s',
         animationFillMode: 'forwards',
       }}
